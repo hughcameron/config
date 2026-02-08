@@ -62,6 +62,9 @@ else
     echo "No age key in metadata — deploy manually after boot"
 fi
 
+# Claude Code (native install for Linux)
+su - $USERNAME -c 'curl -fsSL https://claude.ai/install.sh | bash' || true
+
 # MCP SDK (if chezmoi deployed the mcp-servers dir)
 if [ -d "/home/$USERNAME/.claude/mcp-servers" ]; then
     su - $USERNAME -c "eval \"\$($BREW shellenv)\" && cd ~/.claude/mcp-servers && npm init -y 2>/dev/null && npm install @modelcontextprotocol/sdk" || true
