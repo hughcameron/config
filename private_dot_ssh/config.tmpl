@@ -1,3 +1,11 @@
+{{ if eq .chezmoi.os "darwin" -}}
+# Beelink Mini PC (LAN)
+Host beelink
+    HostName 192.168.1.160
+    User hugh
+    IdentityFile ~/.ssh/github_vm_access
+    IdentitiesOnly yes
+{{ end -}}
 {{ if eq .chezmoi.os "linux" -}}
 # GitHub SSH authentication (for clone/push)
 Host github.com
