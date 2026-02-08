@@ -115,6 +115,9 @@ runcmd:
   # Run manually after chezmoi:
   #   ya pkg install
 
+  # Claude Code (native install for Linux)
+  - su - hugh -c 'curl -fsSL https://claude.ai/install.sh | bash'
+
   # Ghostty terminfo (fixes Delete key over SSH from Ghostty terminal)
   - tic -x /tmp/xterm-ghostty.terminfo
 
