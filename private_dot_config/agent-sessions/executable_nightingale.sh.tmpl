@@ -1,0 +1,9 @@
+#!/bin/bash
+# Launch Nightingale agent session on Beelink
+AGENT="nightingale"
+WORKDIR="~/github/{{ .projects.nightingale.repo_path }}"
+
+echo "Nightingale - {{ .projects.nightingale.name }} (Beelink)"
+echo ""
+
+exec ssh beelink -t "cd $WORKDIR && claude --agent $AGENT --dangerously-skip-permissions"

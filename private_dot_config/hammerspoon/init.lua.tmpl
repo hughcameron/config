@@ -1,0 +1,54 @@
+-- Hammerspoon Configuration
+-- Migrated from ScriptKit
+-- Last Updated: 2026-01-30
+
+-- Auto-reload configuration when init.lua changes
+hs.pathwatcher.new(os.getenv("HOME") .. "/.config/hammerspoon/", function(files)
+    doReload = false
+    for _, file in pairs(files) do
+        if file:sub(-4) == ".lua" then
+            doReload = true
+        end
+    end
+    if doReload then
+        hs.reload()
+    end
+end):start()
+
+-- Show notification when config reloads
+hs.alert.show("Config Reloaded")
+
+-- ===================================
+-- App Launcher Shortcuts
+-- ===================================
+
+local function launchApp(appName)
+    return function()
+        hs.application.launchOrFocus(appName)
+    end
+end
+
+-- Define keyboard shortcuts for app launching
+hs.hotkey.bind({"ctrl", "cmd"}, "p", launchApp("1Password"))
+hs.hotkey.bind({"ctrl", "cmd"}, "c", launchApp("Claude"))
+hs.hotkey.bind({"ctrl", "cmd"}, "f", launchApp("Firefox"))
+hs.hotkey.bind({"ctrl", "cmd"}, "z", launchApp("Zed"))
+
+-- Firefox Profiles
+hs.hotkey.bind({"ctrl", "cmd"}, "g", function()
+    hs.execute("open -na Firefox --args -P Gmail")
+end)
+hs.hotkey.bind({"ctrl", "cmd"}, "h", function()
+    hs.execute("open -na Firefox --args -P {{ .firefox_profile }}")
+end)
+hs.hotkey.bind({"ctrl", "cmd"}, "e", launchApp("Ghostty"))
+
+-- ===================================
+-- Startup Notification
+-- ===================================
+
+hs.notify.new({
+    title = "Hammerspoon",
+    informativeText = "Configuration loaded.",
+    withdrawAfter = 2
+}):send()

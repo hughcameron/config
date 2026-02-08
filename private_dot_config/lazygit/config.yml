@@ -1,0 +1,29 @@
+gui:
+  theme:
+    activeBorderColor:
+      - '#ffcc66' # A warm yellow/orange for active elements
+      - bold
+    inactiveBorderColor:
+      - '#5ccfe6' # A light blue for inactive elements
+    optionsTextColor:
+      - '#ffcc66' # Yellow/orange for options text
+    selectedLineBgColor:
+      - '#363b46' # A slightly lighter background for selected lines
+    selectedRangeBgColor:
+      - '#363b46' # A slightly lighter background for selected ranges
+    cherryPickedCommitBgColor:
+      - '#46364c' # A subtle purple-ish background for cherry-picked commits
+    cherryPickedCommitFgColor:
+      - '#95e6cb' # Green for cherry-picked commit text
+    unstagedChangesColor:
+      - '#f28779' # Red for unstaged changes
+    defaultFgColor:
+      - '#b3b8c3' # A light grey for default foreground text
+    defaultTextColor:
+      - '#b3b8c3' # Default text color
+    searchingActiveBorderColor:
+      - '#ffcc66' # Yellow/orange for active search border
+    menuFgColor:
+      - '#b3b8c3' # Default text color for menus
+    menuBgColor:
+      - '#212733' # Dark background for menus

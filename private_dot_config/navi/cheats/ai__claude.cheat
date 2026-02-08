@@ -1,0 +1,4 @@
+% claude
+
+# Add BrowserOS MCP server (HTTP transport, user scope)
+claude mcp add --transport http browseros http://127.0.0.1:9000/mcp --scope user

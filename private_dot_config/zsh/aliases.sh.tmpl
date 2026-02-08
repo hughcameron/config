@@ -1,0 +1,51 @@
+# Aliases
+
+# Chezmoi
+alias cm='chezmoi'
+alias cmts='cm-target-to-source'
+alias cmup='cm-source-update'
+
+# Git
+alias lg='lazygit'
+
+# Claude
+alias cc='claude'
+
+# Navi
+alias n='navi'
+
+# Claude Agent Invoke
+alias ng='claude --agent nightingale --dangerously-skip-permissions'
+alias st='claude --agent stringer --dangerously-skip-permissions'
+alias hl='claude --agent halliday --dangerously-skip-permissions'
+alias mg='claude --agent mcgill --dangerously-skip-permissions'
+alias cs='claude --agent carson'
+alias at='claude --agent arthur'
+
+{{ if eq .chezmoi.os "darwin" -}}
+# OrbStack agent machines
+alias ong='orbctl start nightingale; ssh nightingale@orb'
+alias ost='orbctl start stringer; ssh stringer@orb'
+alias ohl='orbctl start halliday; ssh halliday@orb'
+alias omg='orbctl start mcgill; ssh mcgill@orb'
+
+# Homebrew
+alias brewup='brew upgrade'
+
+# Finder / Terminal
+alias peek='open .'
+alias tap='open -a Terminal'
+
+# Msgvault
+alias em='msgvault'
+
+# Nushell analysis scripts (kept as nu invocations)
+alias bt='nu ~/.config/nushell/analysis/brewtrend/brewtrend.nu'
+alias ccu='nu ~/.config/nushell/analysis/claude-usage/claude-usage.nu'
+alias gcpvm='nu ~/.config/nushell/scripts/gcpvm.nu'
+
+# DuckDB via navi
+alias dx='navi --query "duckdb -f <file>" --best-match'
+alias dv='navi --query "duckdb -json -f <file> | vd -f json" --best-match'
+alias dj='navi --query "duckdb -json -f <file> | jless" --best-match'
+{{ end -}}

@@ -1,0 +1,3 @@
+% ripgrep, search, json, jless, path
+# Search for a term with ripgrep, extract path and json output, then pipe to jless
+rg <term> --json | jq --compact-output '{path: .data.path.text, content: (.data.lines.text | fromjson)}' | jless

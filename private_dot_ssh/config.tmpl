@@ -1,0 +1,7 @@
+{{ if eq .chezmoi.os "linux" -}}
+# GitHub SSH authentication (for clone/push)
+Host github.com
+    IdentityFile ~/.ssh/github_vm_access
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new
+{{ end -}}

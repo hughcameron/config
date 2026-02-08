@@ -1,0 +1,16 @@
+#!/bin/bash
+# Stop all GCP agent VMs to save costs
+echo "Stopping GCP agent VMs..."
+
+gcloud compute instances stop stringer \
+    --project={{ .projects.stringer.gcp_project }} --zone={{ .projects.stringer.gcp_zone }} --quiet &
+PID1=$!
+
+gcloud compute instances stop halliday \
+    --project={{ .projects.halliday.gcp_project }} --zone={{ .projects.halliday.gcp_zone }} --quiet &
+PID2=$!
+
+wait $PID1 && echo "  stringer stopped" || echo "  stringer: failed or not found"
+wait $PID2 && echo "  halliday stopped" || echo "  halliday: failed or not found"
+
+echo "Done."

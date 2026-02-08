@@ -1,0 +1,12 @@
+% duckdb, db
+
+# Run in DuckDB
+duckdb -f <file>
+
+# DuckDB to Visidata
+duckdb -json -f <file> | vd -f json
+
+# DuckDB to JLESS
+duckdb -json -f <file> | jless
+
+$ file: ls | grep sql

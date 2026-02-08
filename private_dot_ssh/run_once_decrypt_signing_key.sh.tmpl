@@ -1,0 +1,19 @@
+#!/bin/bash
+{{- if eq .chezmoi.os "linux" }}
+# Decrypt signing key on Linux VMs only
+if [ ! -f ~/.ssh/github_vm_access ]; then
+    echo "Decrypting git signing key..."
+    age -d -i ~/.config/chezmoi/age/keys.txt \
+        ~/.local/share/chezmoi/private_dot_ssh/private_encrypted_github_vm_access.age \
+        > ~/.ssh/github_vm_access
+    chmod 600 ~/.ssh/github_vm_access
+    echo "Git signing key decrypted to ~/.ssh/github_vm_access"
+fi
+
+# Copy public key
+if [ ! -f ~/.ssh/github_vm_access.pub ]; then
+    cp ~/.local/share/chezmoi/private_dot_ssh/github_vm_access.pub ~/.ssh/github_vm_access.pub
+    chmod 644 ~/.ssh/github_vm_access.pub
+    echo "Git signing public key copied to ~/.ssh/github_vm_access.pub"
+fi
+{{- end }}

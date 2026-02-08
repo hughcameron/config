@@ -1,0 +1,8 @@
+{{ if ne .chezmoi.os "darwin" }}
+# macOS-only configs - skip on Linux VMs
+.config/ghostty/
+.config/hammerspoon/
+.config/zed/
+.config/nushell/
+.config/utm/
+{{ end }}

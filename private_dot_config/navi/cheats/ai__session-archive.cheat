@@ -1,0 +1,19 @@
+% session-archive, sessions, claude, openclaw, nushell
+
+# Export all sessions to markdown archive
+nu -c "source ~/.config/nushell/analysis/session-archive.nu; session-archive export"
+
+# Show archive status (counts per source)
+nu -c "source ~/.config/nushell/analysis/session-archive.nu; session-archive status"
+
+# Search sessions (BM25 keyword)
+nu -c "source ~/.config/nushell/analysis/session-archive.nu; session-archive search '<query>'"
+
+# Hybrid search with reranking
+nu -c "source ~/.config/nushell/analysis/session-archive.nu; session-archive query '<query>' -n <results>"
+
+# Search in a specific collection
+nu -c "source ~/.config/nushell/analysis/session-archive.nu; session-archive search '<query>' -c <collection>"
+
+$ results: echo "5\n10\n20\n50"
+$ collection: qmd collections 2>/dev/null | tail -n +2 | awk '{print $1}'

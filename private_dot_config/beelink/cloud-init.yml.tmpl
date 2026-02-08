@@ -1,0 +1,84 @@
+#cloud-config
+# Beelink Mini PC provisioning for Claude Code agents (nightingale + mcgill)
+# Also runs Homebridge for smart home automation.
+#
+# Usage: Flash Ubuntu Server 24.04 USB with this as user-data
+#   Place as /var/lib/cloud/seed/nocloud/user-data on the USB drive
+#   Or use autoinstall with cloud-init datasource
+
+package_update: true
+package_upgrade: true
+
+users:
+  - name: hugh
+    shell: /usr/bin/zsh
+    groups: sudo
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICmuv0jZQlsSOtm73JezAJG/4jZc5h6HsOKxiO3qrRdw hugh@beelink-agents
+
+packages:
+  - zsh
+  - git
+  - curl
+  - wget
+  - unzip
+  - build-essential
+  - nodejs
+  - npm
+  - age
+  # Yazi dependencies
+  - file
+  - ffmpeg
+  - p7zip-full
+  - poppler-utils
+  - imagemagick
+  - xclip
+
+runcmd:
+  # Homebrew (installed as hugh, provides all CLI tools)
+  - su - hugh -c 'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+  - su - hugh -c 'echo "eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"" >> ~/.profile'
+
+  # Age key — must be manually deployed after first boot:
+  #   scp ~/.config/chezmoi/age/keys.txt beelink:~/.config/chezmoi/age/keys.txt
+  - su - hugh -c 'mkdir -p ~/.config/chezmoi/age'
+
+  # Chezmoi (install via brew, init from GitHub)
+  - su - hugh -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && brew install chezmoi'
+  # Note: chezmoi init requires age key to be deployed first.
+  # Run manually after deploying the key:
+  #   chezmoi init --apply https://github.com/hughcameron/config.git
+
+  # Install all CLI tools from Brewfile (deployed by chezmoi)
+  # Run manually after chezmoi init:
+  #   brew bundle install --file ~/.config/homebrew/brewfile.txt
+
+  # Yazi plugins (requires chezmoi to have deployed package.toml first)
+  # Run manually after chezmoi:
+  #   ya pkg install
+
+  # Claude Code (global npm)
+  - npm install -g @anthropic-ai/claude-code
+
+  # Ghostty terminfo (fixes Delete key over SSH from Ghostty terminal)
+  # Copy xterm-ghostty.terminfo to the machine first, then:
+  #   tic -x ~/xterm-ghostty.terminfo
+
+  # Create repo directories for agents
+  - su - hugh -c 'mkdir -p ~/github/{{ .projects.nightingale.repo_path }}'
+  - su - hugh -c 'mkdir -p ~/github/hughcameron'
+
+  # Clone repos — requires SSH key registered on GitHub
+  # Run manually after SSH key setup:
+  #   cd ~/github/{{ .projects.nightingale.repo_path }} && git clone git@github.com:{{ .projects.nightingale.repo_path }}/analytics.git
+  #   cd ~/github/hughcameron && git clone git@github.com:hughcameron/{{ .projects.mcgill.repo_a }}.git
+  #   cd ~/github/hughcameron && git clone git@github.com:hughcameron/{{ .projects.mcgill.repo_b }}.git
+
+  # --- Homebridge ---
+  # https://github.com/homebridge/homebridge/wiki/Install-Homebridge-on-Debian-or-Ubuntu-Linux
+  - curl -sSfL https://repo.homebridge.io/KEY.gpg | gpg --dearmor -o /usr/share/keyrings/homebridge.gpg
+  - echo "deb [signed-by=/usr/share/keyrings/homebridge.gpg] https://repo.homebridge.io stable main" > /etc/apt/sources.list.d/homebridge.list
+  - apt-get update
+  - apt-get install -y homebridge
+  # Homebridge UI available at http://beelink:8581 after boot

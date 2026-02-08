@@ -1,0 +1,36 @@
+// Zed keymap
+//
+// For information on binding keys, see the Zed
+// documentation: https://zed.dev/docs/key-bindings
+//
+// To see the default key bindings run `zed: open default keymap`
+// from the command palette.
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "alt-shift-b": ["task::Spawn", { "task_name": "Run in BigQuery" }],
+      "alt-shift-b v": ["task::Spawn", { "task_name": "BigQuery to Visidata" }],
+      "alt-shift-b j": ["task::Spawn", { "task_name": "BigQuery to JLESS" }],
+      "alt-shift-d": ["task::Spawn", { "task_name": "Run in DuckDB" }],
+      "alt-shift-d v": ["task::Spawn", { "task_name": "DuckDB to Visidata" }],
+      "alt-shift-d j": ["task::Spawn", { "task_name": "DuckDB to JLESS" }],
+    },
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "alt-shift-i": "editor::SplitSelectionIntoLines",
+      "alt-shift-n": ["task::Spawn", { "task_name": "Run Script in Terminal" }],
+      "alt-shift-n l": [
+        "task::Spawn",
+        { "task_name": "Run Selected Text in Terminal" },
+      ],
+      "alt-shift-g b": [
+        "task::Spawn",
+        { "task_name": "Browse Repository in GitHub" },
+      ],
+      // "j k": ["workspace::SendKeystrokes", "escape"]
+    },
+  },
+]
