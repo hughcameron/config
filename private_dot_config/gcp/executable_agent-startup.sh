@@ -26,7 +26,7 @@ if ! id "$USERNAME" &>/dev/null; then
 fi
 
 # Timezone
-timedatectl set-timezone Australia/Melbourne
+timedatectl set-timezone Australia/Brisbane
 
 # System packages
 apt-get update
@@ -61,9 +61,6 @@ if [ -n "$AGE_KEY" ]; then
 else
     echo "No age key in metadata — deploy manually after boot"
 fi
-
-# Claude Code (global npm)
-npm install -g @anthropic-ai/claude-code || true
 
 # MCP SDK (if chezmoi deployed the mcp-servers dir)
 if [ -d "/home/$USERNAME/.claude/mcp-servers" ]; then

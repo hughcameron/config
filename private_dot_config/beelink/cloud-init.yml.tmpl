@@ -6,7 +6,7 @@
 #   Place as /var/lib/cloud/seed/nocloud/user-data on the USB drive
 #   Or use autoinstall with cloud-init datasource
 
-timezone: Australia/Melbourne
+timezone: Australia/Brisbane
 
 package_update: true
 package_upgrade: true
@@ -114,9 +114,6 @@ runcmd:
   # Yazi plugins (requires chezmoi to have deployed package.toml first)
   # Run manually after chezmoi:
   #   ya pkg install
-
-  # Claude Code (global npm)
-  - npm install -g @anthropic-ai/claude-code
 
   # Ghostty terminfo (fixes Delete key over SSH from Ghostty terminal)
   - tic -x /tmp/xterm-ghostty.terminfo
