@@ -1,0 +1,26 @@
+#!/bin/bash
+# Launch Stringer agent session on GCP
+AGENT="stringer"
+PROJECT="{{ .projects.stringer.gcp_project }}"
+ZONE="{{ .projects.stringer.gcp_zone }}"
+INSTANCE="stringer"
+WORKDIR="~/github/{{ .projects.stringer.repo_path }}"
+
+echo "Stringer - {{ .projects.stringer.name }} (GCP $PROJECT)"
+echo ""
+
+# Start VM if not running
+echo "Starting VM..."
+gcloud compute instances start "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --quiet 2>/dev/null
+
+# Wait for SSH
+echo "Waiting for SSH..."
+until gcloud compute ssh "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --command="true" 2>/dev/null; do
+    sleep 3
+done
+
+echo "Connected."
+echo ""
+
+exec gcloud compute ssh "$INSTANCE" --project="$PROJECT" --zone="$ZONE" -- \
+    -t "cd $WORKDIR && claude --agent $AGENT --dangerously-skip-permissions"

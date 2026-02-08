@@ -1,0 +1,7 @@
+encryption = "age"
+{{ if eq .chezmoi.os "darwin" -}}
+sourceDir = "/Users/hugh/github/hughcameron/config"
+{{ end }}
+[age]
+    identity = "~/.config/chezmoi/age/keys.txt"
+    recipient = "age18rphfu9hqp40kqc2k4hylsyeplv2lw7t3qjculwfpue08e63xg3shnwe7z"

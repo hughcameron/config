@@ -1,0 +1,14 @@
+# ~/.zshrc - Interactive shell configuration
+
+# Source modular config files
+for file in \
+    "$HOME/.config/zsh/env.sh" \
+    "$HOME/.config/zsh/path.sh" \
+    "$HOME/.config/zsh/secrets.sh" \
+    "$HOME/.config/zsh/aliases.sh" \
+    "$HOME/.config/zsh/functions.zsh" \
+    "$HOME/.config/zsh/tools.zsh" \
+    "$HOME/.config/zsh/widgets.zsh"; do
+    [[ -f "$file" ]] && source "$file"
+done
+unset file

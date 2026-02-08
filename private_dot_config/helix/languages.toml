@@ -1,0 +1,7 @@
+[[language]]
+name = "json"
+formatter = { command = 'prettier', args = ["--parser", "json"] }
+
+[[language]]
+name = "sql"
+formatter = { command = "/opt/homebrew/bin/sql-formatter", args = ["--config", "/Users/hugh/.config/sql/duckdb.sqlformatrc.json"] }

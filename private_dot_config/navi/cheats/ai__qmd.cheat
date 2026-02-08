@@ -1,0 +1,28 @@
+% qmd, sessions, search, archive
+
+# Fast keyword search (BM25)
+qmd search "<query>" -c sessions
+
+# Semantic vector search
+qmd vsearch "<query>" -c sessions
+
+# Hybrid search with reranking (best quality)
+qmd query "<query>" -c sessions -n <results>
+
+# Get a specific document by path
+qmd get "<docpath>"
+
+# List all collections
+qmd collections
+
+# Show collection info
+qmd collections show sessions
+
+# Embed documents for semantic search (~2GB models)
+qmd embed -c sessions
+
+# Re-index collection
+qmd index -c sessions
+
+$ results: echo "5\n10\n20\n50"
+$ docpath: qmd search "" -c sessions 2>/dev/null | head -20 | awk '{print $1}'

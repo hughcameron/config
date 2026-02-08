@@ -1,0 +1,26 @@
+projects:
+  stringer:
+    name: "Project Alpha"
+    gcp_project: "alpha-prod"
+    gcp_zone: "us-west1-b"
+    repo_path: "project-alpha"
+  halliday:
+    name: "Project Beta"
+    gcp_project: "beta-prod"
+    gcp_zone: "australia-southeast1-b"
+    repo_path: "project-beta"
+  nightingale:
+    name: "Project Gamma"
+    repo_path: "project-gamma"
+  mcgill:
+    name: "Project Delta"
+    repo_path: "project-delta"
+    repo_a: "repo-delta-a"
+    repo_b: "repo-delta-b"
+firefox_profile: "Work"
+discord:
+  carson: ""
+  arthur: ""
+  stringer: ""
+  halliday: ""
+  nightingale: ""

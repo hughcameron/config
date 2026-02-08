@@ -1,0 +1,133 @@
+## Color palette - Ayu Dark
+# dark_bg     "#0a0e14"
+# medium_bg   "#2d3640"
+# muted       "#5c6773"
+# light       "#c2c2c2"
+# gold        "#c2a05c"  primary accent
+# blue        "#1f6f88"  directories, docs
+# green       "#7e9350"  executables, success
+# red         "#a85361"  errors, archives, cut
+# purple      "#9464b6"  special files
+
+[mgr]
+marker_copied = { fg = "#7e9350", bg = "#7e9350" }
+marker_cut = { fg = "#a85361", bg = "#a85361" }
+marker_marked = { fg = "#9464b6", bg = "#9464b6" }
+marker_selected = { fg = "#c2a05c", bg = "#c2a05c" }
+
+cwd = { fg = "#c2a05c" }
+
+find_keyword = { fg = "#c2a05c", bg = "#0a0e14" }
+find_position = {}
+
+count_copied = { fg = "#0a0e14", bg = "#7e9350" }
+count_cut = { fg = "#0a0e14", bg = "#a85361" }
+count_selected = { fg = "#0a0e14", bg = "#c2a05c" }
+
+border_symbol = "│"
+border_style = { fg = "#5c6773" }
+
+[indicator]
+parent = { reversed = true }
+current = { reversed = true }
+preview = { reversed = true }
+
+[tabs]
+active = { fg = "#0a0e14", bg = "#c2a05c" }
+inactive = { fg = "#c2a05c", bg = "#2d3640" }
+
+sep_inner = { open = "", close = "" }
+sep_outer = { open = "", close = "" }
+
+
+[mode]
+normal_main = { fg = "#0a0e14", bg = "#c2a05c" }
+normal_alt = { fg = "#c2a05c", bg = "#2d3640" }
+select_main = { fg = "#0a0e14", bg = "#9464b6" }
+select_alt = { fg = "#9464b6", bg = "#2d3640" }
+unset_main = { fg = "#0a0e14", bg = "#1f6f88" }
+unset_alt = { fg = "#1f6f88", bg = "#2d3640" }
+
+
+[status]
+sep_left = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+overall = { fg = "#5c6773", bg = "#0a0e14" }
+
+progress_label = { fg = "#c2a05c", bold = true }
+progress_normal = { fg = "#2d3640", bg = "#0a0e14" }
+progress_error = { fg = "#a85361", bg = "#0a0e14" }
+
+perm_type = { fg = "#7e9350" }
+perm_read = { fg = "#c2a05c" }
+perm_write = { fg = "#a85361" }
+perm_exec = { fg = "#1f6f88" }
+perm_sep = { fg = "#9464b6" }
+
+
+[pick]
+border = { fg = "#1f6f88" }
+active = { fg = "#9464b6", bold = true }
+inactive = {}
+
+[input]
+border = { fg = "#1f6f88" }
+title = {}
+value = {}
+selected = { reversed = true }
+
+[completion]
+border = { fg = "#1f6f88" }
+active = { reversed = true }
+inactive = {}
+
+[tasks]
+border = { fg = "#1f6f88" }
+title = {}
+hovered = { fg = "#9464b6" }
+
+[which]
+cols = 2
+separator = " - "
+separator_style = { fg = "#5c6773" }
+mask = { bg = "#0a0e14" }
+rest = { fg = "#5c6773" }
+cand = { fg = "#c2a05c" }
+desc = { fg = "#2d3640" }
+
+[help]
+on = { fg = "#1f6f88" }
+run = { fg = "#9464b6" }
+desc = {}
+hovered = { reversed = true, bold = true }
+footer = { fg = "#0a0e14", bg = "#5c6773" }
+
+[notify]
+title_info = { fg = "#7e9350" }
+title_warn = { fg = "#c2a05c" }
+title_error = { fg = "#a85361" }
+
+[filetype]
+rules = [
+    # images
+    { mime = "image/*", fg = "#c2a05c" },
+
+    # media
+    { mime = "{audio,video}/*", fg = "#9464b6" },
+
+    # archives
+    { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "#a85361" },
+
+    # documents
+    { mime = "application/{pdf,doc,rtf,vnd.*}", fg = "#1f6f88" },
+
+    # broken links
+    { url = "*", is = "orphan", fg = "#a85361" },
+
+    # executables
+    { url = "*", is = "exec", fg = "#7e9350" },
+
+    # fallback
+    { url = "*", fg = "#c2c2c2" },
+    { url = "*/", fg = "#ffffff" },
+]

@@ -1,0 +1,152 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "use_system_window_tabs": true,
+  "disable_ai": false,
+  "agent_servers": {
+    "claude": {
+      "default_model": "sonnet",
+      "default_mode": "acceptEdits",
+    },
+  },
+  "agent_buffer_font_size": 18.0,
+  "buffer_font_weight": 400.0,
+  "ssh_connections": [
+    {
+      "host": "gcp",
+      "args": [],
+      "projects": [
+        {
+          "paths": ["/home/hugh"],
+        },
+        {
+          "paths": ["/home/hugh_cameron"],
+        },
+      ],
+    },
+    {
+      "host": "garden-patch.us-west1-b.sun-cloud-garden",
+      "args": [],
+      "projects": [],
+    },
+  ],
+  "edit_predictions": {
+    "mode": "subtle",
+    "copilot": {
+      "proxy": null,
+      "proxy_no_verify": null,
+    },
+    "enabled_in_text_threads": false,
+  },
+  "icon_theme": "Warm Charmed Icons",
+  "agent": {
+    "default_model": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4",
+    },
+    "model_parameters": [],
+    "always_allow_tool_actions": true,
+  },
+  "ui_font_size": 18.0,
+  "buffer_font_size": 18.0,
+  "agent_ui_font_size": 18.0,
+  "ui_font_family": "ZedMono Nerd Font",
+  "buffer_font_family": "ZedMono Nerd Font",
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "One Dark",
+  },
+  "experimental.theme_overrides": {
+    "terminal.ansi.green": "#009193",
+    "terminal.ansi.bright_green": "#009193",
+    "created": "#009193",
+    "syntax": {
+      "boolean": {
+        "color": "#b176ed",
+      },
+      "number": {
+        "color": "#ff8155",
+      },
+      "constant": {
+        "color": "#ff5970",
+      },
+      "string": {
+        "color": "#009193",
+      },
+      "string.escape": {
+        "color": "#009193",
+      },
+      "string.regex": {
+        "color": "#009193",
+      },
+      "string.special": {
+        "color": "#009193",
+      },
+      "string.special.symbol": {
+        "color": "#009193",
+      },
+      "text.literal": {
+        "color": "#009193",
+      },
+      "comment": {
+        "font_style": "italic",
+      },
+      "comment.doc": {
+        "font_style": "italic",
+      },
+      "keyword": {
+        "font_style": "italic",
+      },
+      "function": {
+        "font_style": "italic",
+      },
+    },
+  },
+  "languages": {
+    "Python": {
+      "language_servers": [
+        "ty",
+        "ruff",
+        "!basedpyright",
+        "!pyrefly",
+        "!pyright",
+        "!pylsp",
+      ],
+    },
+    "SQL": {
+      "format_on_save": "off",
+      "formatter": {
+        "external": {
+          "command": "/opt/homebrew/bin/sql-formatter",
+          "arguments": [
+            "--config",
+            "/Users/hugh/.config/sql/duckdb.sqlformatrc.json",
+          ],
+        },
+      },
+    },
+  },
+
+  "tab_bar": {
+    "show_pinned_tabs_in_separate_row": true,
+  },
+  "terminal": {
+    "shell": "system",
+    "detect_venv": "off",
+  },
+  "lsp": {
+    "nu": {
+      "binary": {
+        "path": "/opt/homebrew/bin/nu",
+        "arguments": ["--config", "~/.config/nushell/lsp.nu", "--lsp"],
+      },
+    },
+  },
+}

@@ -1,0 +1,26 @@
+#!/bin/bash
+# Launch Halliday agent session on GCP
+AGENT="halliday"
+PROJECT="{{ .projects.halliday.gcp_project }}"
+ZONE="{{ .projects.halliday.gcp_zone }}"
+INSTANCE="halliday"
+WORKDIR="~/github/{{ .projects.halliday.repo_path }}"
+
+echo "Halliday - {{ .projects.halliday.name }} (GCP $PROJECT)"
+echo ""
+
+# Start VM if not running
+echo "Starting VM..."
+gcloud compute instances start "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --quiet 2>/dev/null
+
+# Wait for SSH
+echo "Waiting for SSH..."
+until gcloud compute ssh "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --command="true" 2>/dev/null; do
+    sleep 3
+done
+
+echo "Connected."
+echo ""
+
+exec gcloud compute ssh "$INSTANCE" --project="$PROJECT" --zone="$ZONE" -- \
+    -t "cd $WORKDIR && claude --agent $AGENT --dangerously-skip-permissions"

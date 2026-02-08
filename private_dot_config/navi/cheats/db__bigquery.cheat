@@ -1,0 +1,12 @@
+% bigquery, db, bq
+
+# Run in BigQuery
+cat <file> | bq query --quiet --nouse_legacy_sql
+
+# BigQuery to Visidata
+cat <file> | bq query --quiet --format=json --nouse_legacy_sql | vd -f json
+
+# BigQuery to JLESS
+cat <file> | bq query --quiet --format=json --nouse_legacy_sql | jless
+
+$ file: ls

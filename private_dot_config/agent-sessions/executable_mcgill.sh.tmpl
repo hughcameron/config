@@ -1,0 +1,9 @@
+#!/bin/bash
+# Launch McGill agent session on Beelink
+AGENT="mcgill"
+WORKDIR="~/github/{{ .projects.mcgill.repo_path }}"
+
+echo "McGill - {{ .projects.mcgill.name }} (Beelink)"
+echo ""
+
+exec ssh beelink -t "cd $WORKDIR && claude --agent $AGENT --dangerously-skip-permissions"

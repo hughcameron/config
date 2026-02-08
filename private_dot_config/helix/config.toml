@@ -1,0 +1,54 @@
+theme = "ayu_ghostty"
+
+[editor]
+line-number = "relative"
+mouse = false
+auto-format = true
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.file-picker]
+hidden = false
+
+[keys.normal]
+# Select all occurrences of the current selection
+# See: https://github.com/helix-editor/helix/issues/13003
+o = "@*%s<up><ret>"
+# Quick save, quit or close
+"," = { w = ":w", q = ":wq", x = ":q!", c = ":bc"}
+# Manage Views
+";" = { z = ":toggle soft-wrap.enable"}
+# Shift lines up/down
+# See: https://github.com/helix-editor/helix/discussions/5764
+"A-j" = [ "extend_to_line_bounds", "delete_selection", "paste_after" ]
+"A-k" = [ "extend_to_line_bounds", "delete_selection", "move_line_up", "paste_before" ]
+# See: https://github.com/helix-editor/helix/issues/2245#issuecomment-1144465117
+# duplicate line up
+"C-A-j" = ["extend_line","yank","open_above","normal_mode","replace_with_yanked", "insert_mode"]
+# duplicate line down
+"C-A-k" = ["extend_line","yank","move_line_down","open_above","normal_mode","replace_with_yanked", "insert_mode"]
+
+# DuckDB modal (space + d)
+[keys.normal.space.d]
+# Inline CSV output in new buffer
+d = [":write", ":sh echo \"%{buffer_name}\" > /tmp/hx-file", ":new", ":set-language csv", ":insert-output duckdb -csv -f \"$(cat /tmp/hx-file)\""]
+# Popup with visidata
+v = [":write", ":sh tmux display-popup -w 95% -h 95% -E \"hx-duckdb '%{buffer_name}' vd\""]
+# Popup with jless
+j = [":write", ":sh tmux display-popup -w 95% -h 95% -E \"hx-duckdb '%{buffer_name}' jless\""]
+# Popup with less (scrollable)
+l = [":write", ":sh tmux display-popup -w 95% -h 95% -E \"hx-duckdb '%{buffer_name}' csv\""]
+
+# BigQuery modal (space + b)
+[keys.normal.space.b]
+# Inline output in new buffer
+b = [":write", ":sh echo \"%{buffer_name}\" > /tmp/hx-file", ":new", ":insert-output bq query --quiet --nouse_legacy_sql < \"$(cat /tmp/hx-file)\""]
+# Popup with visidata
+v = [":write", ":sh tmux display-popup -w 95% -h 95% -E \"hx-bigquery '%{buffer_name}' vd\""]
+# Popup with jless
+j = [":write", ":sh tmux display-popup -w 95% -h 95% -E \"hx-bigquery '%{buffer_name}' jless\""]
+# Popup with less
+l = [":write", ":sh tmux display-popup -w 95% -h 95% -E \"hx-bigquery '%{buffer_name}' csv\""]

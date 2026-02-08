@@ -1,0 +1,14 @@
+{
+  "language": "duckdb",
+  "tabWidth": 2,
+  "useTabs": false,
+  "identifierCase": "lower",
+  "keywordCase": "upper",
+  "functionCase": "upper",
+  "indentStyle": "standard",
+  "logicalOperatorNewline": "before",
+  "expressionWidth": 80,
+  "newlineBeforeSemicolon": false,
+  "linesBetweenQueries": 1,
+  "denseOperators": true
+}

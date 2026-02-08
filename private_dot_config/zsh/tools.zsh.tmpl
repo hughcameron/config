@@ -1,0 +1,19 @@
+# Tool initializations
+
+# Initialize zsh completion system (needed by carapace and other tools)
+autoload -Uz compinit && compinit
+
+# Starship prompt
+eval "$(starship init zsh)"
+
+# Zoxide (provides z and zi commands)
+eval "$(zoxide init zsh)"
+
+# FNM - Fast Node Manager with auto version switching
+command -v fnm &>/dev/null && eval "$(fnm env --use-on-cd --shell zsh)"
+
+# fzf key bindings (Ctrl+R history, Ctrl+T file picker, Alt+C cd)
+eval "$(fzf --zsh)"
+
+# Carapace completions
+command -v carapace &>/dev/null && eval "$(carapace _carapace zsh)"

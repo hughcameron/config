@@ -1,0 +1,159 @@
+{
+  "Create Table": {
+    "prefix": "ctbl",
+    "body": ["CREATE OR REPLACE TABLE ${1:table_name} AS"],
+    "description": "Create Table Statement"
+  },
+  "Read CSV": {
+    "prefix": "rcsv",
+    "body": [
+      "CREATE TABLE ${1:table_name} AS",
+      "SELECT *",
+      "FROM read_csv_auto (",
+      "    '${2:path_to_file}',",
+      "    header = TRUE",
+      ");"
+    ],
+    "description": "Create Table from CSV"
+  },
+  "Read TSV": {
+    "prefix": "rtsv",
+    "body": [
+      "CREATE TABLE ${1:table_name} AS",
+      "SELECT *",
+      "FROM read_csv_auto (",
+      "    '${2:path_to_file}',",
+      "    header = TRUE,",
+      "    sep = '\\t'",
+      ");"
+    ],
+    "description": "Create Table from TSV"
+  },
+  "Write CSV": {
+    "prefix": "wcsv",
+    "body": [
+      "COPY ${1:table_name}",
+      "TO '${2:path_to_file}' WITH (sep ',', header TRUE);"
+    ],
+    "description": "Write Table to CSV"
+  },
+  "Write TSV": {
+    "prefix": "wtsv",
+    "body": [
+      "COPY ${1:table_name}",
+      "TO '${2:path_to_file}' WITH (sep '\\t', header TRUE);"
+    ],
+    "description": "Write Table to TSV"
+  },
+  "Read Columns": {
+    "prefix": "rcol",
+    "body": [
+      "SELECT * FROM read_csv('${1:path_to_file}',",
+      "    delim = '|',",
+      "    header = true,",
+      "    columns = {",
+      "        '${2:column_name}': '${3:column_type}'",
+      "    });"
+    ],
+    "description": "Read Columns from CSV"
+  },
+  "Sniff JSON": {
+    "prefix": "sjson",
+    "body": [
+      "WITH      schema_list AS (",
+      "          SELECT    json_structure (value) AS schema",
+      "          FROM      read_csv (",
+      "                    'path_to_file',",
+      "                    all_varchar = TRUE,",
+      "                    ignore_errors = TRUE,",
+      "                    columns={'value': 'VARCHAR'}",
+      "                    ))",
+      "SELECT    schema",
+      "FROM      schema_list",
+      "GROUP BY  schema",
+      "ORDER BY  LENGTH(schema) DESC",
+      "LIMIT     1;"
+    ],
+    "description": "Sniff JSON"
+  },
+  "Read JSON": {
+    "prefix": "rjson",
+    "body": [
+      "CREATE OR REPLACE TABLE ${1:table_name} AS",
+      "SELECT * FROM read_json('${2:path_to_file}');"
+    ],
+    "description": "Read JSON"
+  },
+  "Read JSONL": {
+    "prefix": "rjsonl",
+    "body": [
+      "CREATE OR REPLACE TABLE ${1:table_name} AS",
+      "SELECT *",
+      "FROM      read_json('${1:path_to_file}', FORMAT = 'newline_delimited');"
+    ],
+    "description": "Read JSONL"
+  },
+  "Write JSON": {
+    "prefix": "wjarr",
+    "body": [
+      "COPY ${1:table_name}",
+      "TO '${2:path_to_file}' WITH (ARRAY true);"
+    ],
+    "description": "Write Table to JSON"
+  },
+  "Write JSONL": {
+    "prefix": "wjsonl",
+    "body": [
+      "COPY ${1:table_name}",
+      "TO '${2:path_to_file}' WITH (ARRAY false);"
+    ],
+    "description": "Write Table to JSON"
+  },
+  "Read Parquet": {
+    "prefix": "rpar",
+    "body": [
+      "SELECT * FROM read_parquet('${1:path_to_file}', filename = true);"
+    ],
+    "description": "Read Parquet"
+  },
+  "Write Parquet": {
+    "prefix": "wpar",
+    "body": [
+      "COPY ${1:table_name}",
+      "TO '${2:path_to_file}' WITH (FORMAT 'parquet');"
+    ],
+    "description": "Write Table to Parquet"
+  },
+  "Sniff CSV": {
+    "prefix": "sniffcsv",
+    "body": [
+      "COPY (",
+      "SELECT Prompt",
+      "FROM sniff_csv('${1:path_to_input}')",
+      ") TO '${2:path_to_output}' WITH (FORMAT CSV, HEADER FALSE, QUOTE '');"
+    ],
+    "description": "Write Table to Parquet"
+  },
+  "Pivot": {
+    "prefix": "pvt",
+    "body": [
+      "PIVOT ${1:dataset}",
+      "ON ${2:columns}",
+      "USING ${3:values}",
+      "GROUP BY ⟨rows⟩",
+      "ORDER BY ⟨columns_with_order_directions⟩",
+      "LIMIT ⟨number_of_rows⟩;"
+    ],
+    "description": "Create Table from CSV"
+  },
+  "Describe Table": {
+    "prefix": "desc",
+    "body": ["DESCRIBE ${1:dataset}"],
+    "description": "Describe Table"
+  },
+  "Summarize Table": {
+    "prefix": "summ",
+    "body": ["SUMMARIZE ${1:dataset}"],
+    "description": "Summarize Table"
+  }
+}
