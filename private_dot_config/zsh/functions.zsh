@@ -19,13 +19,15 @@ clone() {
         owner="$match[1]"
         repo="$match[2]"
         url_to_clone="https://github.com/${owner}/${repo}"
-    elif [[ "$url" =~ '^https?://github\.com/([^/]+)/([^/]+?)(\.git)?$' ]]; then
+    elif [[ "$url" =~ '^https?://github\.com/([^/]+)/([^/]+)$' ]]; then
         owner="$match[1]"
         repo="$match[2]"
+        repo="${repo%.git}"
         url_to_clone="$url"
-    elif [[ "$url" =~ '^git@github\.com:([^/]+)/([^/]+?)(\.git)?$' ]]; then
+    elif [[ "$url" =~ '^git@github\.com:([^/]+)/([^/]+)$' ]]; then
         owner="$match[1]"
         repo="$match[2]"
+        repo="${repo%.git}"
         url_to_clone="$url"
     else
         echo "Invalid GitHub URL format: $url"
