@@ -1,0 +1,50 @@
+
+% Diff Folders
+
+# Brief summary of which files differ between two folders
+diff -rq <folder1> <folder2>
+
+# Full unified diff between two folders
+diff -ru <folder1> <folder2>
+
+# Diff two folders, excluding a directory (e.g. .git, node_modules)
+diff -ru --exclude='<exclude_pattern>' <folder1> <folder2>
+
+# Diff two folders, brief mode, excluding a directory
+diff -rq --exclude='<exclude_pattern>' <folder1> <folder2>
+
+# Diff two folders with colored output (requires colordiff)
+diff -ru <folder1> <folder2> | colordiff | less -R
+
+# List files only in the first folder
+diff -rq <folder1> <folder2> | grep 'Only in <folder1>'
+
+# List files only in the second folder
+diff -rq <folder1> <folder2> | grep 'Only in <folder2>'
+
+$ folder1: ls -d */
+$ folder2: ls -d */
+$ exclude_pattern: echo -e '.git\nnode_modules\n__pycache__\n.venv\n.next\ndist\nbuild'
+
+% Diff Files
+
+# Unified diff between two files
+diff -u <file1> <file2>
+
+# Side-by-side diff between two files
+diff -y <file1> <file2>
+
+# Side-by-side diff, only showing differences
+diff -y --suppress-common-lines <file1> <file2>
+
+# Diff two files ignoring whitespace
+diff -u -w <file1> <file2>
+
+# Diff two files ignoring case
+diff -u -i <file1> <file2>
+
+# Colored diff between two files (requires colordiff)
+diff -u <file1> <file2> | colordiff | less -R
+
+$ file1: ls -p | grep -v /
+$ file2: ls -p | grep -v /

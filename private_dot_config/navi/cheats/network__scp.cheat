@@ -1,0 +1,34 @@
+% scp, transfer, rsync
+
+# Copy a folder to a remote host
+scp -r <local_folder> <user>@<host>:<remote_path>
+
+# Copy a single file to a remote host
+scp <local_file> <user>@<host>:<remote_path>
+
+# Copy a folder from a remote host to local
+scp -r <user>@<host>:<remote_path> <local_folder>
+
+# Copy a single file from a remote host to local
+scp <user>@<host>:<remote_path> <local_file>
+
+# Copy a folder to a remote host on a custom port
+scp -P <port> -r <local_folder> <user>@<host>:<remote_path>
+
+# Rsync a folder to a remote host (resumable, delta sync)
+rsync -avz <local_folder> <user>@<host>:<remote_path>
+
+# Rsync a folder from a remote host to local
+rsync -avz <user>@<host>:<remote_path> <local_folder>
+
+# Rsync with progress and partial transfers
+rsync -avz --progress --partial <local_folder> <user>@<host>:<remote_path>
+
+# Dry-run rsync to see what would be transferred
+rsync -avzn <local_folder> <user>@<host>:<remote_path>
+
+$ local_folder: ls -d */
+$ local_file: ls
+$ user: echo -e 'hugh'
+$ host: echo -e 'beelink\n192.168.1.100'
+$ port: echo -e '22\n2222'
