@@ -9,7 +9,7 @@ rev = "88990a6"
 hash = "3996fc74044bc44144b323686f887e1"
 
 [[plugin.deps]]
-use = "yazi-rs/plugins:git"
+use = "yazi-rs/plugins:vcs-files"
 rev = "88990a6"
 hash = "270915fa8282a19908449530ff66f7e2"
 
