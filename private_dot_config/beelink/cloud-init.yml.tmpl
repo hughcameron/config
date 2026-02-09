@@ -1,5 +1,6 @@
 #cloud-config
-# Beelink Mini PC provisioning for Claude Code agents (nightingale + mcgill)
+# Beelink Mini PC provisioning for Claude Code agents
+# Agents: nightingale, mcgill, stringer, halliday
 # Also runs Homebridge for smart home automation.
 #
 # Usage: Flash Ubuntu Server 24.04 USB with this as user-data
@@ -123,13 +124,24 @@ runcmd:
 
   # Create repo directories for agents
   - su - hugh -c 'mkdir -p ~/github/{{ .projects.nightingale.repo_path }}'
+  - su - hugh -c 'mkdir -p ~/github/{{ .projects.stringer.repo_path }}'
+  - su - hugh -c 'mkdir -p ~/github/{{ .projects.halliday.repo_path }}'
   - su - hugh -c 'mkdir -p ~/github/hughcameron'
+
+  # GCP CLI (needed by stringer and halliday for deployments)
+  - su - hugh -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && brew install google-cloud-sdk'
+  # GCP credentials — must be manually deployed after first boot:
+  #   scp ~/.config/gcloud/nextweek-key.json beelink:~/.config/gcloud/nextweek-key.json
+  #   scp ~/.config/gcloud/hypewell-key.json beelink:~/.config/gcloud/hypewell-key.json
+  - su - hugh -c 'mkdir -p ~/.config/gcloud'
 
   # Clone repos — requires SSH key registered on GitHub
   # Run manually after SSH key setup:
   #   cd ~/github/{{ .projects.nightingale.repo_path }} && git clone git@github.com:{{ .projects.nightingale.repo_path }}/analytics.git
   #   cd ~/github/hughcameron && git clone git@github.com:hughcameron/{{ .projects.mcgill.repo_a }}.git
   #   cd ~/github/hughcameron && git clone git@github.com:hughcameron/{{ .projects.mcgill.repo_b }}.git
+  #   cd ~/github/{{ .projects.stringer.repo_path }} && for r in studio web pinterest-mcp dataforseo-merchant-mcp photo-album; do git clone git@github.com:{{ .projects.stringer.repo_path }}/$r.git; done
+  #   cd ~/github/{{ .projects.halliday.repo_path }} && for r in hy studio web homebrew-tap; do git clone git@github.com:{{ .projects.halliday.repo_path }}/$r.git; done
 
   # --- Homebridge ---
   # https://github.com/homebridge/homebridge/wiki/Install-Homebridge-on-Debian-or-Ubuntu-Linux
