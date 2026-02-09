@@ -23,11 +23,12 @@ alias cs='claude --agent carson'
 alias at='claude --agent arthur'
 
 {{ if eq .chezmoi.os "darwin" -}}
-# OrbStack agent machines
-alias ong='orbctl start nightingale; ssh nightingale@orb'
-alias ost='orbctl start stringer; ssh stringer@orb'
-alias ohl='orbctl start halliday; ssh halliday@orb'
-alias omg='orbctl start mcgill; ssh mcgill@orb'
+# Remote agent sessions
+alias ong='~/.config/agent-sessions/nightingale.sh'
+alias ost='~/.config/agent-sessions/stringer.sh'
+alias ohl='~/.config/agent-sessions/halliday.sh'
+alias omg='~/.config/agent-sessions/mcgill.sh'
+alias vmstop='~/.config/agent-sessions/stop-gcp.sh'
 
 # Homebrew
 alias brewup='brew upgrade'
