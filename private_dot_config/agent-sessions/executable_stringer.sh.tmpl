@@ -11,7 +11,7 @@ echo ""
 
 # Start VM if not running
 echo "Starting VM..."
-gcloud compute instances start "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --account=hugh@nextweek.media --quiet 2>/dev/null
+gcloud compute instances start "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --account=nextweek-studio@nextweek-prod.iam.gserviceaccount.com --quiet 2>/dev/null
 
 # Wait for SSH
 echo "Waiting for SSH..."
