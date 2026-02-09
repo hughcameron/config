@@ -11,16 +11,16 @@ echo ""
 
 # Start VM if not running
 echo "Starting VM..."
-gcloud compute instances start "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --quiet 2>/dev/null
+gcloud compute instances start "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --account=hugh@nextweek.media --quiet 2>/dev/null
 
 # Wait for SSH
 echo "Waiting for SSH..."
-until gcloud compute ssh "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --command="true" 2>/dev/null; do
+until gcloud compute ssh "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --ssh-key-file=~/.ssh/gcp_agent_vm_access --command="true" 2>/dev/null; do
     sleep 3
 done
 
 echo "Connected."
 echo ""
 
-exec gcloud compute ssh "$INSTANCE" --project="$PROJECT" --zone="$ZONE" -- \
+exec gcloud compute ssh "$INSTANCE" --project="$PROJECT" --zone="$ZONE" --ssh-key-file=~/.ssh/gcp_agent_vm_access -- \
     -t "cd $WORKDIR && claude --agent $AGENT --dangerously-skip-permissions"

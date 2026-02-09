@@ -3,7 +3,7 @@
 echo "Stopping GCP agent VMs..."
 
 gcloud compute instances stop stringer \
-    --project={{ .projects.stringer.gcp_project }} --zone={{ .projects.stringer.gcp_zone }} --quiet &
+    --project={{ .projects.stringer.gcp_project }} --zone={{ .projects.stringer.gcp_zone }} --account=hugh@nextweek.media --quiet &
 PID1=$!
 
 gcloud compute instances stop halliday \
