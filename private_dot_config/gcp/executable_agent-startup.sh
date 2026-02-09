@@ -65,7 +65,13 @@ fi
 # Claude Code (native install for Linux)
 su - $USERNAME -c 'curl -fsSL https://claude.ai/install.sh | bash' || true
 
-# MCP SDK (if chezmoi deployed the mcp-servers dir)
+# Clone claude repo (agents, skills, memory)
+if [ ! -d "/home/$USERNAME/.claude/.git" ]; then
+    su - $USERNAME -c "GIT_SSH_COMMAND='ssh -i ~/.ssh/github_vm_access -o IdentitiesOnly=yes' git clone git@github.com:hughcameron/claude.git ~/.claude" || echo "Claude repo clone failed — may need GitHub SSH key"
+    su - $USERNAME -c "cd ~/.claude && git config core.sshCommand 'ssh -i ~/.ssh/github_vm_access -o IdentitiesOnly=yes'"
+fi
+
+# MCP SDK
 if [ -d "/home/$USERNAME/.claude/mcp-servers" ]; then
     su - $USERNAME -c "eval \"\$($BREW shellenv)\" && cd ~/.claude/mcp-servers && npm init -y 2>/dev/null && npm install @modelcontextprotocol/sdk" || true
 fi
