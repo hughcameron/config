@@ -109,7 +109,7 @@ cm-target-to-source() {
 # Chezmoi: dump brew bundle to brewfile
 cm-dump-brewfile() {
     echo "Dumping Homebrew packages to brewfile..."
-    brew bundle dump --force "--file=$HOME/.config/homebrew/brewfile.txt"
+    brew bundle dump --force "--file=$HOMEBREW_BUNDLE_FILE"
     echo "Brewfile updated"
 }
 
