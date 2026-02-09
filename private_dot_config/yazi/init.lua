@@ -3,7 +3,7 @@ require("duckdb"):setup()
 
 require("full-border"):setup()
 
-require("vcs-files"):setup {
+require("git"):setup {
 	-- Order of status signs showing in the linemode
 	order = 1500,
 }

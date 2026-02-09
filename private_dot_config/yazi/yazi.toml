@@ -11,14 +11,14 @@ prepend_rules = [
 ]
 
 [[plugin.prepend_fetchers]]
-id  = "vcs-files"
+id  = "git"
 url = "*"
-run = "vcs-files"
+run = "git"
 
 [[plugin.prepend_fetchers]]
-id  = "vcs-files"
+id  = "git"
 url = "*/"
-run = "vcs-files"
+run = "git"
 
 [plugin]  
 prepend_previewers = [  
