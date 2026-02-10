@@ -1,5 +1,8 @@
 # Tool initializations
 
+# Custom completions (e.g. backlog CLI)
+fpath=(~/.zsh/completions $fpath)
+
 # Initialize zsh completion system (needed by carapace and other tools)
 autoload -Uz compinit && compinit
 
