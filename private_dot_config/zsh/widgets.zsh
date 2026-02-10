@@ -1,6 +1,6 @@
 # Zle widgets and keybindings
 
-# Ctrl+E: Yazi with CWD tracking and prompt refresh
+# Ctrl+F: Yazi with CWD tracking and prompt refresh
 _yazi_widget() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
     command yazi --cwd-file="$tmp"
@@ -10,7 +10,7 @@ _yazi_widget() {
     zle reset-prompt
 }
 zle -N _yazi_widget
-bindkey '^e' _yazi_widget
+bindkey '^f' _yazi_widget
 
 # Ctrl+K: Helix editor
 _hx_widget() {
