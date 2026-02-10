@@ -9,6 +9,7 @@ tap "yakitrak/yakitrak"
 
 # macOS CLI tools
 brew "age"
+brew "backlog-md"
 brew "bat"
 brew "carapace"
 brew "chawan"

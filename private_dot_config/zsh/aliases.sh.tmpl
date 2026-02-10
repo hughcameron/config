@@ -15,12 +15,12 @@ alias cc='claude'
 alias n='navi'
 
 # Claude Agent Invoke
-alias ng='claude --agent nightingale --dangerously-skip-permissions'
-alias st='claude --agent stringer --dangerously-skip-permissions'
-alias hl='claude --agent halliday --dangerously-skip-permissions'
-alias mg='claude --agent mcgill --dangerously-skip-permissions'
-alias cs='claude --agent carson'
-alias at='claude --agent arthur'
+alias ng='claude --agent nightingale --dangerously-skip-permissions --verbose'
+alias st='claude --agent stringer --dangerously-skip-permissions --verbose'
+alias hl='claude --agent halliday --dangerously-skip-permissions --verbose'
+alias mg='claude --agent mcgill --dangerously-skip-permissions --verbose'
+alias cs='claude --agent carson --verbose'
+alias at='claude --agent arthur --verbose'
 
 {{ if eq .chezmoi.os "darwin" -}}
 # Remote agent sessions

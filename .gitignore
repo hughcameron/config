@@ -2,6 +2,9 @@
 node_modules/
 package-lock.json
 
+# Machine-specific permissions (accumulated per-session, not portable)
+.claude/settings.local.json
+
 # Claude Code runtime/ephemeral data
 private_dot_claude/private_debug/
 private_dot_claude/private_file-history/
