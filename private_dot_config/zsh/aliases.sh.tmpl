@@ -46,3 +46,7 @@ alias dx='navi --query "duckdb -f <file>" --best-match'
 alias dv='navi --query "duckdb -json -f <file> | vd -f json" --best-match'
 alias dj='navi --query "duckdb -json -f <file> | jless" --best-match'
 {{ end -}}
+
+{{ if eq .chezmoi.os "linux" -}}
+alias ci='curl -fsSL https://claude.ai/install.sh | bash'
+{{ end -}}
