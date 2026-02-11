@@ -49,3 +49,11 @@ _lazygit_widget() {
 }
 zle -N _lazygit_widget
 bindkey '^o' _lazygit_widget
+
+# Ctrl+B: Backlog board
+_backlog_board_widget() {
+    command backlog board
+    zle reset-prompt
+}
+zle -N _backlog_board_widget
+bindkey '^b' _backlog_board_widget
