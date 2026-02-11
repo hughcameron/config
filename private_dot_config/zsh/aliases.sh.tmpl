@@ -5,6 +5,9 @@ alias cm='chezmoi'
 alias cmts='cm-target-to-source'
 alias cmup='cm-source-update'
 
+# Homebrew
+alias brewup='brew upgrade'
+
 # Git
 alias lg='lazygit'
 
@@ -25,9 +28,6 @@ alias at='claude --agent arthur --verbose'
 {{ if eq .chezmoi.os "darwin" -}}
 # Remote agent sessions
 alias bb='ssh beelink'
-
-# Homebrew
-alias brewup='brew upgrade'
 
 # Finder / Terminal
 alias peek='open .'
