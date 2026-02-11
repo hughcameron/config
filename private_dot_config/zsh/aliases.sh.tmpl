@@ -18,12 +18,23 @@ alias cc='claude'
 alias n='navi'
 
 # Claude Agent Invoke
+{{ if eq .chezmoi.os "linux" -}}
+# Beelink: isolated dev server — blanket permission bypass is acceptable
 alias ng='claude --agent nightingale --dangerously-skip-permissions --verbose'
 alias st='claude --agent stringer --dangerously-skip-permissions --verbose'
 alias hl='claude --agent halliday --dangerously-skip-permissions --verbose'
 alias mg='claude --agent mcgill --dangerously-skip-permissions --verbose'
+alias cs='claude --agent carson --dangerously-skip-permissions --verbose'
+alias at='claude --agent arthur --dangerously-skip-permissions --verbose'
+{{ else -}}
+# macOS: acceptEdits auto-approves file changes; Bash/MCP governed by allowlists
+alias ng='claude --agent nightingale --permission-mode acceptEdits --verbose'
+alias st='claude --agent stringer --permission-mode acceptEdits --verbose'
+alias hl='claude --agent halliday --permission-mode acceptEdits --verbose'
+alias mg='claude --agent mcgill --permission-mode acceptEdits --verbose'
 alias cs='claude --agent carson --verbose'
 alias at='claude --agent arthur --verbose'
+{{ end -}}
 
 {{ if eq .chezmoi.os "darwin" -}}
 # Remote agent sessions
