@@ -39,6 +39,8 @@ alias at='claude --agent arthur --verbose'
 {{ if eq .chezmoi.os "darwin" -}}
 # Remote agent sessions
 alias bb='ssh beelink'
+alias bba='navi --query "attach to existing tmux" --best-match'
+alias bbs='navi --query "session with app in project" --best-match'
 
 # Finder / Terminal
 alias peek='open .'
