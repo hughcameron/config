@@ -52,8 +52,9 @@ bindkey '^o' _lazygit_widget
 
 # Ctrl+B: Backlog board
 _backlog_board_widget() {
-    command backlog board
-    zle reset-prompt
+    zle push-line
+    BUFFER="backlog board"
+    zle accept-line
 }
 zle -N _backlog_board_widget
 bindkey '^b' _backlog_board_widget
