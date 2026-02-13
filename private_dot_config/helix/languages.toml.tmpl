@@ -1,0 +1,11 @@
+[[language]]
+name = "json"
+formatter = { command = 'prettier', args = ["--parser", "json"] }
+
+[[language]]
+name = "sql"
+{{ if eq .chezmoi.os "darwin" -}}
+formatter = { command = "/opt/homebrew/bin/sql-formatter", args = ["--config", "{{ .chezmoi.homeDir }}/.config/sql/duckdb.sqlformatrc.json"] }
+{{ else -}}
+formatter = { command = "/home/linuxbrew/.linuxbrew/bin/sql-formatter", args = ["--config", "{{ .chezmoi.homeDir }}/.config/sql/duckdb.sqlformatrc.json"] }
+{{ end -}}
