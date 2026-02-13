@@ -1,0 +1,98 @@
+# Helix theme matching Ghostty's Ayu Mirage terminal palette
+# Based on ayu_mirage, modified to match terminal ANSI colors
+
+# Syntax highlighting
+"type" = "cyan"
+"type.builtin" = "cyan"
+"constructor" = "cyan"
+"constant" = "magenta"
+"constant.numeric" = "magenta"
+"constant.character" = "magenta"
+"constant.builtin" = "magenta"
+"string" = "green"
+"string.regexp" = "cyan"
+"string.special" = "magenta"
+"comment" = { fg = "gray", modifiers = ["italic"] }
+"variable" = "foreground"
+"variable.builtin" = "magenta"
+"label" = "cyan"
+"punctuation" = "foreground"
+"keyword" = "orange"
+"keyword.control" = "orange"
+"keyword.directive" = "magenta"
+"operator" = "foreground"
+"function" = "blue"
+"tag" = "cyan"
+"namespace" = "cyan"
+"markup.heading" = "yellow"
+"markup.list" = "yellow"
+"markup.bold" = { fg = "yellow", modifiers = ["bold"] }
+"markup.italic" = { fg = "yellow", modifiers = ["italic"] }
+"markup.strikethrough" = { modifiers = ["crossed_out"] }
+"markup.raw.block" = "yellow"
+"markup.link.url" = "blue"
+"markup.link.text" = "yellow"
+"markup.link.label" = "green"
+"markup.quote" = "yellow"
+"diff.plus" = "green"
+"diff.minus" = "red"
+"diff.delta" = "yellow"
+
+# Interface
+"ui.background" = { bg = "background" }
+"ui.cursor" = { fg = "black", bg = "yellow" }
+"ui.cursor.primary" = { fg = "black", bg = "yellow" }
+"ui.cursor.match" = "yellow"
+"ui.linenr" = "dark_gray"
+"ui.linenr.selected" = "gray"
+"ui.statusline" = { fg = "foreground", bg = "black" }
+"ui.statusline.normal" = { fg = "black", bg = "blue" }
+"ui.statusline.insert" = { fg = "black", bg = "yellow" }
+"ui.statusline.select" = { fg = "black", bg = "magenta" }
+"ui.cursorline" = { bg = "black" }
+"ui.popup" = { fg = "foreground", bg = "black" }
+"ui.window" = "dark_gray"
+"ui.help" = { fg = "foreground", bg = "black" }
+"ui.text" = "foreground"
+"ui.text.focus" = { bg = "dark_gray", fg = "foreground" }
+"ui.text.info" = "foreground"
+"ui.virtual.whitespace" = "dark_gray"
+"ui.virtual.ruler" = { bg = "black" }
+"ui.virtual.inlay-hint" = { fg = "yellow", bg = "#3d3a30" }
+"ui.menu" = { fg = "foreground", bg = "black" }
+"ui.menu.selected" = { bg = "gray", fg = "background" }
+"ui.selection" = { bg = "dark_gray" }
+"warning" = "yellow"
+"error" = { fg = "red", modifiers = ["bold"] }
+"info" = { fg = "blue", modifiers = ["bold"] }
+"hint" = { fg = "blue", modifiers = ["bold"] }
+"diagnostic.hint" = { underline = { color = "blue", style = "curl" } }
+"diagnostic.info" = { underline = { color = "blue", style = "curl" } }
+"diagnostic.warning" = { underline = { color = "yellow", style = "curl" } }
+"diagnostic.error" = { underline = { color = "red", style = "curl" } }
+"diagnostic.unnecessary" = { modifiers = ["dim"] }
+"diagnostic.deprecated" = { modifiers = ["crossed_out"] }
+"ui.bufferline" = { fg = "gray", bg = "background" }
+"ui.bufferline.active" = { fg = "foreground", bg = "dark_gray" }
+"ui.debug" = { fg = "yellow", bg = "background" }
+"ui.highlight.frameline" = { bg = "#0067a3" }
+"ui.virtual.jump-label" = { fg = "red", modifiers = ["italic", "bold"] }
+
+"special" = "yellow"
+
+[palette]
+# Matches Ghostty's Ayu Mirage ANSI palette exactly
+background = "#1f2430"
+foreground = "#cccac2"
+
+black = "#171b24"       # palette 0
+red = "#f28779"         # palette 9 (bright red)
+green = "#d5ff80"       # palette 10 (bright green)
+yellow = "#ffd173"      # palette 11 (bright yellow)
+blue = "#73d0ff"        # palette 12 (bright blue) - for functions
+magenta = "#dfbfff"     # palette 13 (bright magenta)
+cyan = "#95e6cb"        # palette 14 (bright cyan) - for types
+white = "#ffffff"       # palette 15 (bright white)
+dark_gray = "#686868"   # palette 8 (bright black)
+gray = "#c7c7c7"        # palette 7 (white)
+orange = "#facc6e"      # palette 3 (yellow) - renders as orange for keywords
