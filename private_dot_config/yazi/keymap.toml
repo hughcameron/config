@@ -33,27 +33,27 @@ desc = "Save bookmark"
 
 [[mgr.prepend_keymap]]
 on   = ["u", "g"]
-run  = "plugin yamb jump-by-key"
+run  = "plugin yamb jump_by_key"
 desc = "Jump to bookmark by key"
 
 [[mgr.prepend_keymap]]
 on   = ["u", "G"]
-run  = "plugin yamb jump-by-fzf"
+run  = "plugin yamb jump_by_fzf"
 desc = "Jump to bookmark via fzf"
 
 [[mgr.prepend_keymap]]
 on   = ["u", "d"]
-run  = "plugin yamb delete-by-key"
+run  = "plugin yamb delete_by_key"
 desc = "Delete bookmark by key"
 
 [[mgr.prepend_keymap]]
 on   = ["u", "D"]
-run  = "plugin yamb delete-by-fzf"
+run  = "plugin yamb delete_by_fzf"
 desc = "Delete bookmark via fzf"
 
 [[mgr.prepend_keymap]]
 on   = ["u", "r"]
-run  = "plugin yamb rename-by-key"
+run  = "plugin yamb rename_by_key"
 desc = "Rename bookmark by key"
 
 # Session save-and-quit (autosession)
