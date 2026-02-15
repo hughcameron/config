@@ -1,3 +1,9 @@
+[preview]
+# Fallback dimensions for SSH where ioctl pixel detection fails
+max_width  = 1920
+max_height = 1200
+image_filter = "lanczos3"
+
 [opener]
 helix = [
     { run = 'hx "$@"', block = true, for = "unix" },
