@@ -14,6 +14,12 @@ on   = ["g", "c"]
 run  = "plugin vcs-files"
 desc = "Show Git file changes"
 
+# Toggle pane visibility
+[[mgr.prepend_keymap]]
+on   = "T"
+run  = "plugin toggle-pane min-preview"
+desc = "Show or hide the preview pane"
+
 # DuckDB Preview Mappings
 
 [[manager.prepend_keymap]]
