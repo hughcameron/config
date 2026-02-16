@@ -1,0 +1,8 @@
+[Unit]
+Description=Homebrew upgrade
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "/home/linuxbrew/.linuxbrew/bin/brew update && /home/linuxbrew/.linuxbrew/bin/brew upgrade"
+Environment=PATH=/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/usr/local/bin:/usr/bin:/bin
+Environment=HOMEBREW_NO_AUTO_UPDATE=1
