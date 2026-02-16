@@ -21,7 +21,7 @@ run  = "plugin toggle-pane min-preview"
 desc = "Show or hide the preview pane"
 
 [[mgr.prepend_keymap]]
-on   = ["g", "T"]
+on   = ["g", "t"]
 run  = "plugin toggle-pane max-preview"
 desc = "Maximize or restore the preview pane"
 
@@ -62,11 +62,17 @@ on   = "q"
 run  = "plugin autosession -- save-and-quit"
 desc = "Save session and quit"
 
-# Calculate directory/selection size (what-size)
+# Copy path as local volume path (Beelink mount → local)
 [[mgr.prepend_keymap]]
-on   = [".", "s"]
-run  = "plugin what-size"
-desc = "Calc size of selection or cwd"
+on   = ["c", "v"]
+run  = "plugin copy-volume-path"
+desc = "Copy path remapped for volume mount"
+
+# Paste clipboard image/content to file
+[[mgr.prepend_keymap]]
+on   = ["p", "c"]
+run  = "plugin save-clipboard-to-file"
+desc = "Paste clipboard content to file"
 
 # DuckDB Preview Mappings
 
