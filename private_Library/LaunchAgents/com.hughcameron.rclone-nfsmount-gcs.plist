@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.hughcameron.rclone-nfsmount-gcs</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/rclone</string>
+        <string>nfsmount</string>
+        <string>gcs:hypewell-outputs</string>
+        <string>/Users/hugh/gcs</string>
+        <string>--read-only</string>
+        <string>--vfs-cache-mode=off</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/hugh/.local/share/rclone/nfsmount-gcs.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/hugh/.local/share/rclone/nfsmount-gcs.log</string>
+</dict>
+</plist>
