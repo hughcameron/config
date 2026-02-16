@@ -49,14 +49,14 @@ rev = "da38c3e"
 hash = "5a691c4fb17201eab2edb94643d324ae"
 
 [[plugin.deps]]
-use = "pirafrank/what-size"
-rev = "179ebf6"
-hash = "57056b9728006881d580ccabe8154a9c"
-
-[[plugin.deps]]
 use = "yazi-rs/plugins:piper"
 rev = "88990a6"
 hash = "25aee698dd1081001008ce0cb1cc4da3"
+
+[[plugin.deps]]
+use = "boydaihungst/save-clipboard-to-file"
+rev = "9fcd6c4"
+hash = "d67c9d3df0b067be229fb526c77b08ae"
 
 [[flavor.deps]]
 use = "gosxrgxx/flexoki-dark"

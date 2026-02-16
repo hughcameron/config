@@ -19,6 +19,3 @@ require("autosession"):setup()
 -- Disk usage in header (Linux only, uses df)
 require("fs-usage"):setup()
 
--- Directory size calculator
-require("what-size"):setup()
-
