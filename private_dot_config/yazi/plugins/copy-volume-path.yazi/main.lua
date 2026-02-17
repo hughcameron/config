@@ -1,7 +1,9 @@
 --- Copy the hovered file path, transforming volume mounts to local paths.
---- e.g. /Volumes/Beelink/foo → /home/hugh/foo
+--- e.g. /Users/hugh/beelink/foo → /home/hugh/foo
+--- e.g. /Volumes/Beelink/foo  → /home/hugh/foo
 
 local MOUNTS = {
+	["/Users/hugh/beelink"] = "/home/hugh",
 	["/Volumes/Beelink"] = "/home/hugh",
 }
 
