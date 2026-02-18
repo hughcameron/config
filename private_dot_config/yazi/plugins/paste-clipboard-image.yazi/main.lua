@@ -7,7 +7,7 @@ local function entry()
 
 	local name, event = ya.input({
 		title = "Paste clipboard image as:",
-		value = "clipboard.png",
+		value = os.date("%Y-%m-%d_%H-%M-%S") .. ".png",
 		pos = { "center", w = 60 },
 	})
 
