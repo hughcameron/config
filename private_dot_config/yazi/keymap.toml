@@ -74,6 +74,12 @@ on   = ["p", "c"]
 run  = "plugin save-clipboard-to-file"
 desc = "Paste clipboard content to file"
 
+# Paste clipboard image (via pngpaste)
+[[mgr.prepend_keymap]]
+on   = ["p", "i"]
+run  = "plugin paste-clipboard-image"
+desc = "Paste clipboard image to file"
+
 # DuckDB Preview Mappings
 
 [[manager.prepend_keymap]]
