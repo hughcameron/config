@@ -56,8 +56,8 @@
   "ui_font_size": 18.0,
   "buffer_font_size": 18.0,
   "agent_ui_font_size": 18.0,
-  "ui_font_family": "ZedMono Nerd Font",
-  "buffer_font_family": "ZedMono Nerd Font",
+  "ui_font_family": "JetBrainsMono Nerd Font",
+  "buffer_font_family": "JetBrainsMono Nerd Font",
   "theme": {
     "mode": "dark",
     "light": "One Light",
