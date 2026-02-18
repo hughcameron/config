@@ -33,7 +33,7 @@ Debian = ""
 Windows = ""
 
 [hostname]
-aliases = { "Hughs-MacBook-Pro" = "macbook" }
+aliases = { "Hughs-MacBook-Pro" = "macbook", "Hughs-MBP" = "macbook" }
 ssh_symbol = '🌐 '
 ssh_only = false
 style = "bg:#a3aed2 fg:#090c0c"
