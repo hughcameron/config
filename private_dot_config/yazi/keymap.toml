@@ -68,15 +68,14 @@ on   = ["c", "v"]
 run  = "plugin copy-volume-path"
 desc = "Copy path remapped for volume mount"
 
-# Paste clipboard image/content to file
+# Paste clipboard content/image to file (capital C to avoid blocking p=paste)
 [[mgr.prepend_keymap]]
-on   = ["p", "c"]
+on   = ["C", "c"]
 run  = "plugin save-clipboard-to-file"
 desc = "Paste clipboard content to file"
 
-# Paste clipboard image (via pngpaste)
 [[mgr.prepend_keymap]]
-on   = ["p", "i"]
+on   = ["C", "i"]
 run  = "plugin paste-clipboard-image"
 desc = "Paste clipboard image to file"
 
