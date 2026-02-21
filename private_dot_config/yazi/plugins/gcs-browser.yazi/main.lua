@@ -1,38 +1,36 @@
 --- GCS Browser: Browse Google Cloud Storage buckets and objects from yazi.
 --- Uses gcloud storage ls + fzf for interactive navigation.
 --- Keybinding: g s
+--- @since 26.2.2
 
 local get_cwd = ya.sync(function()
 	return tostring(cx.active.current.cwd)
 end)
 
+local TMP_PATH = "/tmp/yazi-gcs-items.txt"
+
 --- List GCS path contents via gcloud storage ls.
+--- Uses yazi's Command() API (not io.popen which is sandboxed in 26.x).
 --- @param path string|nil  nil = list buckets, "gs://bucket/path/" = list contents
 --- @return table|nil items  List of full gs:// paths
 --- @return string|nil err   Error message if failed
 local function gcs_ls(path)
-	local cmd
+	local args = { "storage", "ls" }
 	if path then
-		cmd = string.format('gcloud storage ls "%s" 2>&1', path)
-	else
-		cmd = "gcloud storage ls 2>&1"
+		table.insert(args, path)
 	end
 
-	local handle = io.popen(cmd, "r")
-	if not handle then
-		return nil, "Failed to run gcloud storage ls"
+	local output, err = Command("gcloud"):arg(args):stdout(Command.PIPED):stderr(Command.PIPED):output()
+	if err then
+		return nil, "gcloud error: " .. err
 	end
-
-	local output = handle:read("*all") or ""
-	handle:close()
-
-	-- Check for errors
-	if output:match("^ERROR") or output:match("^CommandException") then
-		return nil, output:match("^(.-)\n") or output
+	if not output.status.success then
+		local msg = output.stderr or ""
+		return nil, msg:match("^(.-)\n") or msg
 	end
 
 	local items = {}
-	for line in output:gmatch("[^\r\n]+") do
+	for line in output.stdout:gmatch("[^\r\n]+") do
 		line = line:match("^%s*(.-)%s*$") -- trim
 		if #line > 0 then
 			table.insert(items, line)
@@ -40,15 +38,15 @@ local function gcs_ls(path)
 	end
 
 	if #items == 0 then
-		return nil, "Empty — no items found"
+		return nil, "Empty -- no items found"
 	end
 
 	return items
 end
 
 --- Strip the parent path prefix for cleaner fzf display.
---- Buckets: "gs://my-bucket/" → "my-bucket/"
---- Objects: "gs://bucket/folder/file.txt" with prefix "gs://bucket/folder/" → "file.txt"
+--- Buckets: "gs://my-bucket/" -> "my-bucket/"
+--- Objects: "gs://bucket/folder/file.txt" with prefix "gs://bucket/folder/" -> "file.txt"
 --- @param item string  Full gs:// path
 --- @param prefix string|nil  Parent path to strip (nil for bucket listing)
 --- @return string  Display name
@@ -67,7 +65,8 @@ local function display_name(item, prefix)
 end
 
 --- Show items in fzf and return the user's selection.
---- Uses ya.hide() + io.popen() pattern (from yamb.yazi).
+--- Uses ya.hide() + Command("sh") for fzf (interactive TUI needs terminal).
+--- Items written via fs.write() (yazi-native, no io.open needed).
 --- @param items table  List of full gs:// paths
 --- @param current_path string|nil  Current GCS path (nil for bucket root)
 --- @return table|nil  { action = "enter"|"ctrl-y"|"ctrl-d", path = "gs://..." }
@@ -78,61 +77,56 @@ local function fzf_pick(items, current_path)
 		table.insert(names, display_name(item, current_path))
 	end
 
-	-- Write items to temp file (avoids all shell escaping issues)
-	local tmp = os.tmpname()
-	local f = io.open(tmp, "w")
-	if not f then
-		return nil
-	end
-	for _, name in ipairs(names) do
-		f:write(name .. "\n")
-	end
-	f:close()
-
-	-- Build header: current location + keybinding hints
+	-- Build file content: first 2 lines are header, rest are selectable items
 	local location = current_path or "GCS Buckets"
 	local hints = "Enter=open  Ctrl-Y=copy path  Ctrl-D=download  Esc=back"
+	local lines = { location, hints }
+	for _, name in ipairs(names) do
+		table.insert(lines, name)
+	end
+	local content = table.concat(lines, "\n") .. "\n"
 
-	-- Construct fzf command
-	-- $'...' allows embedded \n for multi-line header
-	local cmd = string.format(
-		"fzf --no-sort --expect=ctrl-y,ctrl-d --prompt='GCS > ' --header=$'%s\\n%s' < '%s'",
-		location,
-		hints,
-		tmp
+	-- Write to temp file using yazi's fs API
+	local tmp_url = Url(TMP_PATH)
+	fs.write(tmp_url, content)
+
+	-- Run fzf via sh — header-lines=2 uses first 2 lines as sticky header
+	local fzf_cmd = string.format(
+		"fzf --no-sort --expect=ctrl-y,ctrl-d --prompt='GCS > ' --header-lines=2 < '%s'",
+		TMP_PATH
 	)
 
 	local permit = ya.hide()
-	local handle = io.popen(cmd, "r")
-	local result = nil
+	local output, err = Command("sh"):arg({ "-c", fzf_cmd }):stdout(Command.PIPED):output()
+	permit:drop()
 
-	if handle then
-		local output = handle:read("*all") or ""
-		handle:close()
+	-- Cleanup temp file
+	fs.remove("file", tmp_url)
 
-		-- fzf --expect output: line 1 = key pressed, line 2 = selected item
-		-- Enter → key is empty; ctrl-y/ctrl-d → key is the name; Esc → empty output
-		local key, selected = output:match("^(.-)\n(.-)%s*$")
-		if selected and #selected > 0 then
-			-- Map display name back to full path
-			for i, name in ipairs(names) do
-				if name == selected then
-					local action = "enter"
-					if key == "ctrl-y" then
-						action = "ctrl-y"
-					elseif key == "ctrl-d" then
-						action = "ctrl-d"
-					end
-					result = { action = action, path = items[i] }
-					break
+	if err or not output then
+		return nil
+	end
+
+	-- Parse fzf --expect output: line 1 = key pressed, line 2 = selected item
+	-- Enter -> key is empty; ctrl-y/ctrl-d -> key is the name; Esc -> empty stdout
+	local stdout = output.stdout or ""
+	local key, selected = stdout:match("^(.-)\n(.-)%s*$")
+	if selected and #selected > 0 then
+		-- Map display name back to full path
+		for i, name in ipairs(names) do
+			if name == selected then
+				local action = "enter"
+				if key == "ctrl-y" then
+					action = "ctrl-y"
+				elseif key == "ctrl-d" then
+					action = "ctrl-d"
 				end
+				return { action = action, path = items[i] }
 			end
 		end
 	end
 
-	permit:drop()
-	os.remove(tmp)
-	return result
+	return nil
 end
 
 --- Copy a gs:// path to the system clipboard.
@@ -156,27 +150,34 @@ local function download(gs_path, cwd)
 		timeout = 2,
 	})
 
-	local cmd = string.format('gcloud storage cp "%s" "%s/" 2>&1', gs_path, cwd)
-	local handle = io.popen(cmd, "r")
-	if handle then
-		local output = handle:read("*all") or ""
-		handle:close()
+	local output, err = Command("gcloud")
+		:arg({ "storage", "cp", gs_path, cwd .. "/" })
+		:stdout(Command.PIPED)
+		:stderr(Command.PIPED)
+		:output()
 
-		if output:match("^ERROR") or output:match("^CommandException") then
-			ya.notify({
-				title = "GCS Browser",
-				content = "Download failed: " .. (output:match("^(.-)\n") or output),
-				timeout = 5,
-				level = "error",
-			})
-		else
-			local filename = gs_path:match("([^/]+)$") or gs_path
-			ya.notify({
-				title = "GCS Browser",
-				content = "Downloaded: " .. filename,
-				timeout = 3,
-			})
-		end
+	if err then
+		ya.notify({
+			title = "GCS Browser",
+			content = "Download error: " .. err,
+			timeout = 5,
+			level = "error",
+		})
+	elseif not output.status.success then
+		local msg = output.stderr or "Unknown error"
+		ya.notify({
+			title = "GCS Browser",
+			content = "Download failed: " .. (msg:match("^(.-)\n") or msg),
+			timeout = 5,
+			level = "error",
+		})
+	else
+		local filename = gs_path:match("([^/]+)$") or gs_path
+		ya.notify({
+			title = "GCS Browser",
+			content = "Downloaded: " .. filename,
+			timeout = 3,
+		})
 	end
 end
 
@@ -184,19 +185,16 @@ end
 return {
 	entry = function()
 		-- Verify gcloud is available
-		local check = io.popen("command -v gcloud 2>/dev/null", "r")
-		if check then
-			local bin = check:read("*l")
-			check:close()
-			if not bin or #bin == 0 then
-				ya.notify({
-					title = "GCS Browser",
-					content = "gcloud CLI not found. Install Google Cloud SDK first.",
-					timeout = 5,
-					level = "error",
-				})
-				return
-			end
+		local output, err =
+			Command("gcloud"):arg({ "--version" }):stdout(Command.PIPED):stderr(Command.PIPED):output()
+		if err or not output or not output.status.success then
+			ya.notify({
+				title = "GCS Browser",
+				content = "gcloud CLI not found. Install Google Cloud SDK first.",
+				timeout = 5,
+				level = "error",
+			})
+			return
 		end
 
 		local cwd = get_cwd()
@@ -204,12 +202,12 @@ return {
 		local history = {} -- stack for back navigation
 
 		while true do
-			local items, err = gcs_ls(current_path)
+			local items, ls_err = gcs_ls(current_path)
 			if not items then
-				if err then
+				if ls_err then
 					ya.notify({
 						title = "GCS Browser",
-						content = err,
+						content = ls_err,
 						timeout = 5,
 						level = "error",
 					})
@@ -233,7 +231,7 @@ return {
 				if result.path:sub(-1) == "/" then
 					ya.notify({
 						title = "GCS Browser",
-						content = "Cannot download a directory — select a file",
+						content = "Cannot download a directory -- select a file",
 						timeout = 3,
 						level = "warn",
 					})
