@@ -65,7 +65,7 @@ local function display_name(item, prefix)
 end
 
 --- Show items in fzf and return the user's selection.
---- Uses ya.hide() + Command("sh") for fzf (interactive TUI needs terminal).
+--- Uses ui.hide() + Command("sh") for fzf (interactive TUI needs terminal).
 --- Items written via fs.write() (yazi-native, no io.open needed).
 --- @param items table  List of full gs:// paths
 --- @param current_path string|nil  Current GCS path (nil for bucket root)
@@ -96,7 +96,7 @@ local function fzf_pick(items, current_path)
 		TMP_PATH
 	)
 
-	local permit = ya.hide()
+	local permit = ui.hide()
 	local output, err = Command("sh"):arg({ "-c", fzf_cmd }):stdout(Command.PIPED):output()
 	permit:drop()
 
