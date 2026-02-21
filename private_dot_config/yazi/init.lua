@@ -20,9 +20,7 @@ require("autosession"):setup()
 require("fs-usage"):setup()
 
 -- GCS browser: header indicator, auto-populate, preview, download
-require("gcs-yazi"):setup({
+require("gcs-browser"):setup({
 	gcloud_path = "/opt/homebrew/bin/gcloud",
-	preview_bytes = 2048,    -- bytes to fetch for file preview (default: 800)
-	-- download_dir = "~/Downloads",  -- default
 })
 
