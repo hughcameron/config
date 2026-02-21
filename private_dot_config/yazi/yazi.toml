@@ -23,7 +23,7 @@ prepend_fetchers = [
 ]
 
 prepend_previewers = [
-  { url = "/tmp/yazi-gcs/**", run = "gcs-yazi" },
+  { url = "/tmp/yazi-gcs/**", run = "gcs-browser" },
   { url = "*.md",      run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s=dark "$1"' },
   { url = "*.csv",     run = "duckdb" },
   { url = "*.tsv",     run = "duckdb" },
