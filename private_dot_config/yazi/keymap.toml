@@ -83,7 +83,22 @@ desc = "Paste clipboard image to file"
 [[mgr.prepend_keymap]]
 on   = ["g", "s"]
 run  = "plugin gcs-yazi"
-desc = "Browse GCS buckets"
+desc = "Browse GCS buckets / refresh"
+
+[[mgr.prepend_keymap]]
+on   = ["c", "g"]
+run  = "plugin gcs-yazi -- copy"
+desc = "Copy gs:// path"
+
+[[mgr.prepend_keymap]]
+on   = ["g", "d"]
+run  = "plugin gcs-yazi -- download"
+desc = "Download GCS file to ~/Downloads"
+
+[[mgr.prepend_keymap]]
+on   = ["g", "q"]
+run  = "plugin gcs-yazi -- exit"
+desc = "Exit GCS browser"
 
 # DuckDB Preview Mappings
 
