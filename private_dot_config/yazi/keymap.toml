@@ -79,6 +79,12 @@ on   = ["C", "i"]
 run  = "plugin paste-clipboard-image"
 desc = "Paste clipboard image to file"
 
+# GCS bucket browser
+[[mgr.prepend_keymap]]
+on   = ["g", "s"]
+run  = "plugin gcs-browser"
+desc = "Browse GCS buckets"
+
 # DuckDB Preview Mappings
 
 [[manager.prepend_keymap]]
