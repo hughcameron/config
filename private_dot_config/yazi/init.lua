@@ -19,3 +19,8 @@ require("autosession"):setup()
 -- Disk usage in header (Linux only, uses df)
 require("fs-usage"):setup()
 
+-- GCS browser: header indicator + auto-populate on cd
+require("gcs-yazi"):setup({
+	gcloud_path = "/opt/homebrew/bin/gcloud",
+})
+

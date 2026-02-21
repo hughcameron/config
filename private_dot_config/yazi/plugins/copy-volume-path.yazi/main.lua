@@ -1,13 +1,21 @@
 --- Copy the hovered file path, transforming volume mounts to local paths.
---- e.g. /Users/hugh/beelink/foo → /home/hugh/foo
---- e.g. /Volumes/Beelink/foo  → /home/hugh/foo
+--- e.g. /Users/hugh/beelink/foo  -> /home/hugh/foo
+--- e.g. /Volumes/Beelink/foo     -> /home/hugh/foo
+--- e.g. /tmp/yazi-gcs/bucket/obj -> gs://bucket/obj
 
 local MOUNTS = {
 	["/Users/hugh/beelink"] = "/home/hugh",
 	["/Volumes/Beelink"] = "/home/hugh",
 }
 
+local GCS_TMP = "/tmp/yazi-gcs"
+
 local function transform(path)
+	-- GCS temp directory -> gs:// URI
+	if path:sub(1, #GCS_TMP) == GCS_TMP and #path > #GCS_TMP then
+		return "gs://" .. path:sub(#GCS_TMP + 2)
+	end
+
 	for prefix, replacement in pairs(MOUNTS) do
 		if path:sub(1, #prefix) == prefix then
 			return replacement .. path:sub(#prefix + 1)
