@@ -26,5 +26,9 @@ private_dot_claude/private_plugins/
 # Private chezmoi data (real project names, not for public repo)
 .chezmoidata/private.yaml
 
+# Backlog.md auto-created directories (use ~/.claude/backlog instead)
+backlog/
+agents/
+
 # Backup files
 *.backup
