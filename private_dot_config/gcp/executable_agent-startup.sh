@@ -65,10 +65,15 @@ fi
 # Claude Code (native install for Linux)
 su - $USERNAME -c 'curl -fsSL https://claude.ai/install.sh | bash' || true
 
-# Clone claude repo (agents, skills, memory)
-if [ ! -d "/home/$USERNAME/.claude/.git" ]; then
-    su - $USERNAME -c "GIT_SSH_COMMAND='ssh -i ~/.ssh/github_vm_access -o IdentitiesOnly=yes' git clone git@github.com:hughcameron/claude.git ~/.claude" || echo "Claude repo clone failed — may need GitHub SSH key"
-    su - $USERNAME -c "cd ~/.claude && git config core.sshCommand 'ssh -i ~/.ssh/github_vm_access -o IdentitiesOnly=yes'"
+# Clone ops repo (agents, skills, memory) into canonical path and symlink ~/.claude
+OPS_DIR="/home/$USERNAME/github/hughcameron/ops"
+if [ ! -d "$OPS_DIR/.git" ]; then
+    su - $USERNAME -c "mkdir -p ~/github/hughcameron"
+    su - $USERNAME -c "GIT_SSH_COMMAND='ssh -i ~/.ssh/github_vm_access -o IdentitiesOnly=yes' git clone git@github.com:hughcameron/ops.git $OPS_DIR" || echo "Ops repo clone failed — may need GitHub SSH key"
+    su - $USERNAME -c "cd $OPS_DIR && git config core.sshCommand 'ssh -i ~/.ssh/github_vm_access -o IdentitiesOnly=yes'"
+fi
+if [ ! -L "/home/$USERNAME/.claude" ]; then
+    su - $USERNAME -c "ln -s $OPS_DIR ~/.claude"
 fi
 
 # MCP SDK
