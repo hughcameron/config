@@ -24,7 +24,7 @@ prepend_fetchers = [
 
 prepend_previewers = [
   { url = "/tmp/yazi-gcs/**", run = "gcs-browser" },
-  { url = "*.md",      run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s=$HOME/.config/glow/ayu-mirage.json "$1"' },
+  { url = "*.md",      run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s=$HOME/.config/glow/tokyo-night.json "$1"' },
   { url = "*.csv",     run = "duckdb" },
   { url = "*.tsv",     run = "duckdb" },
   { url = "*.json",    run = "duckdb" },
