@@ -58,12 +58,3 @@ use = "boydaihungst/save-clipboard-to-file"
 rev = "9fcd6c4"
 hash = "d67c9d3df0b067be229fb526c77b08ae"
 
-[[flavor.deps]]
-use = "BennyOe/tokyo-night"
-rev = "8e6296f"
-hash = "d9da921c3bd37ba32ee27a8a7a40461f"
-
-[[flavor.deps]]
-use = "BennyOe/onedark"
-rev = "668d71d"
-hash = "1e647ba2d7c6e6f2bafe858ad9a4e50a"
