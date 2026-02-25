@@ -19,8 +19,10 @@ require("autosession"):setup()
 -- Disk usage in header (Linux only, uses df)
 require("fs-usage"):setup()
 
--- GCS browser: header indicator, auto-populate, preview, download
+{{- if eq .chezmoi.os "darwin" }}
+-- GCS browser: header indicator, auto-populate, preview, download (macOS only)
 require("gcs-browser"):setup({
 	gcloud_path = "/opt/homebrew/bin/gcloud",
 })
+{{- end }}
 
