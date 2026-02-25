@@ -12,7 +12,7 @@
 "string" = "green"
 "string.regexp" = "cyan"
 "string.special" = "magenta"
-"comment" = { fg = "gray", modifiers = ["italic"] }
+"comment" = { fg = "#5f7e97", modifiers = ["italic"] }
 "variable" = "foreground"
 "variable.builtin" = "magenta"
 "label" = "cyan"
@@ -44,7 +44,7 @@
 "ui.cursor.primary" = { fg = "black", bg = "yellow" }
 "ui.cursor.match" = "yellow"
 "ui.linenr" = "dark_gray"
-"ui.linenr.selected" = "gray"
+"ui.linenr.selected" = "#cccac2"
 "ui.statusline" = { fg = "foreground", bg = "black" }
 "ui.statusline.normal" = { fg = "black", bg = "blue" }
 "ui.statusline.insert" = { fg = "black", bg = "yellow" }
@@ -54,13 +54,13 @@
 "ui.window" = "dark_gray"
 "ui.help" = { fg = "foreground", bg = "black" }
 "ui.text" = "foreground"
-"ui.text.focus" = { bg = "dark_gray", fg = "foreground" }
+"ui.text.focus" = { bg = "#1d3b53", fg = "foreground" }
 "ui.text.info" = "foreground"
 "ui.virtual.whitespace" = "dark_gray"
 "ui.virtual.ruler" = { bg = "black" }
-"ui.virtual.inlay-hint" = { fg = "yellow", bg = "#3d3a30" }
+"ui.virtual.inlay-hint" = { fg = "yellow", bg = "#0b2841" }
 "ui.menu" = { fg = "foreground", bg = "black" }
-"ui.menu.selected" = { bg = "gray", fg = "background" }
+"ui.menu.selected" = { bg = "#234d6b", fg = "foreground" }
 "ui.selection" = { bg = "dark_gray" }
 "warning" = "yellow"
 "error" = { fg = "red", modifiers = ["bold"] }
@@ -73,7 +73,7 @@
 "diagnostic.unnecessary" = { modifiers = ["dim"] }
 "diagnostic.deprecated" = { modifiers = ["crossed_out"] }
 "ui.bufferline" = { fg = "gray", bg = "background" }
-"ui.bufferline.active" = { fg = "foreground", bg = "dark_gray" }
+"ui.bufferline.active" = { fg = "foreground", bg = "#1d3b53" }
 "ui.debug" = { fg = "yellow", bg = "background" }
 "ui.highlight.frameline" = { bg = "#0067a3" }
 "ui.virtual.jump-label" = { fg = "red", modifiers = ["italic", "bold"] }
@@ -81,11 +81,11 @@
 "special" = "yellow"
 
 [palette]
-# Matches Ghostty's Ayu Mirage ANSI palette exactly
-background = "#1f2430"
+# Ayu Mirage syntax colors on Night Owl deep navy surfaces
+background = "#011627"
 foreground = "#cccac2"
 
-black = "#171b24"       # palette 0
+black = "#0b2841"       # elevated surfaces (popups, statusline, cursorline)
 red = "#f28779"         # palette 9 (bright red)
 green = "#d5ff80"       # palette 10 (bright green)
 yellow = "#ffd173"      # palette 11 (bright yellow)
@@ -93,6 +93,6 @@ blue = "#73d0ff"        # palette 12 (bright blue) - for functions
 magenta = "#dfbfff"     # palette 13 (bright magenta)
 cyan = "#95e6cb"        # palette 14 (bright cyan) - for types
 white = "#ffffff"       # palette 15 (bright white)
-dark_gray = "#686868"   # palette 8 (bright black)
-gray = "#c7c7c7"        # palette 7 (white)
+dark_gray = "#1d3b53"   # selection, highlights, borders — navy-toned
+gray = "#5f7e97"        # muted text (line numbers, comments placeholder)
 orange = "#facc6e"      # palette 3 (yellow) - renders as orange for keywords

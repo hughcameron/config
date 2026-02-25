@@ -98,10 +98,10 @@
       },
       "error": {
         "color": "#f28779",
-        "background_color": "#171b24"
+        "background_color": "#0b2841"
       },
       "comment": {
-        "color": "#686868"
+        "color": "#5f7e97"
       },
       "comment_preproc": {
         "color": "#facc6e"
@@ -174,10 +174,10 @@
         "bold": true
       },
       "generic_subheading": {
-        "color": "#686868"
+        "color": "#5f7e97"
       },
       "background": {
-        "background_color": "#171b24"
+        "background_color": "#011627"
       }
     }
   },
