@@ -1,6 +1,13 @@
 {{ if eq .chezmoi.os "darwin" -}}
-# Beelink Mini PC (LAN)
+# Beelink Mini PC (Tailscale — works from anywhere)
 Host beelink
+    HostName 100.119.232.84
+    User hugh
+    IdentityFile ~/.ssh/github_vm_access
+    IdentitiesOnly yes
+
+# Beelink Mini PC (LAN only — faster on home network)
+Host beelink-lan
     HostName 192.168.1.160
     User hugh
     IdentityFile ~/.ssh/github_vm_access
