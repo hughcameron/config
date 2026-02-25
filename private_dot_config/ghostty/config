@@ -48,7 +48,7 @@
 # # Just for example:
 # resize-overlay-duration = 4s 200ms
 
-theme = "Ayu Mirage"
+theme = "TokyoNight Storm"
 font-family = "JetBrainsMono Nerd Font"
 font-size = 20
 
