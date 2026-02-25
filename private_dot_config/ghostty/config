@@ -52,6 +52,11 @@ theme = "Ayu Mirage"
 font-family = "JetBrainsMono Nerd Font"
 font-size = 20
 
+# Override background and near-background ANSI slots to Night Owl deep navy
+background = #011627
+palette = 0=#0b2841
+palette = 8=#1d3b53
+
 # Enable Option key as Alt for terminal applications like Helix
 macos-option-as-alt = true
 
