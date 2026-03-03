@@ -41,6 +41,7 @@ end)
 hs.hotkey.bind({"ctrl", "cmd"}, "h", function()
     hs.execute("open -na Firefox --args -P {{ .firefox_profile }}")
 end)
+hs.hotkey.bind({"ctrl", "cmd"}, "t", launchApp("Things3"))
 hs.hotkey.bind({"ctrl", "cmd"}, "e", launchApp("Ghostty"))
 
 -- ===================================
