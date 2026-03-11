@@ -130,16 +130,10 @@ q() {
 # Usage: decisions [--all]
 decisions() {
     local search_dirs=()
-    local repos=(
-        "$HOME/github/hughcameron/ops"
-        "$HOME/github/hughcameron/mavericks"
-        "$HOME/github/hughcameron/condor"
-        "$HOME/github/hughcameron/stryker"
-    )
 
     if [[ "$1" == "--all" ]]; then
-        for repo in "${repos[@]}"; do
-            [[ -d "$repo/decisions" ]] && search_dirs+=("$repo/decisions")
+        for repo in "$HOME"/github/*/*/decisions(N/); do
+            search_dirs+=("$repo")
         done
     else
         # Find decisions/ in current repo (walk up to git root)
