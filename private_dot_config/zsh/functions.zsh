@@ -176,7 +176,7 @@ decisions() {
     selected="$(printf '%s\n' "${entries[@]}" | \
         fzf --ansi \
             --header 'Decision Register (Enter: open in editor, Esc: close)' \
-            --preview 'glow -w $(( COLUMNS / 2 - 4 )) -s dark {2}' \
+            --preview 'CLICOLOR_FORCE=1 glow -w $(( COLUMNS / 2 - 4 )) -s dark {2}' \
             --preview-window 'right:60%:wrap' \
             --delimiter $'\t' \
             --with-nth 1)"
