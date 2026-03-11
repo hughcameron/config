@@ -50,11 +50,10 @@ _lazygit_widget() {
 zle -N _lazygit_widget
 bindkey '^o' _lazygit_widget
 
-# Ctrl+B: Backlog board
-_backlog_board_widget() {
-    zle push-line
-    BUFFER="backlog board"
-    zle accept-line
+# Ctrl+B: Decision register browser (fzf + glow)
+_decisions_widget() {
+    decisions
+    zle reset-prompt
 }
-zle -N _backlog_board_widget
-bindkey '^b' _backlog_board_widget
+zle -N _decisions_widget
+bindkey '^b' _decisions_widget
