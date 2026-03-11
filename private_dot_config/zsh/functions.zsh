@@ -125,3 +125,73 @@ cm-source-update() {
 q() {
     qmd search "$1" -c sessions
 }
+
+# Decision register browser (MADR files in decisions/)
+# Usage: decisions [--all]
+decisions() {
+    local search_dirs=()
+    local repos=(
+        "$HOME/github/hughcameron/ops"
+        "$HOME/github/hughcameron/mavericks"
+        "$HOME/github/hughcameron/condor"
+        "$HOME/github/hughcameron/stryker"
+    )
+
+    if [[ "$1" == "--all" ]]; then
+        for repo in "${repos[@]}"; do
+            [[ -d "$repo/decisions" ]] && search_dirs+=("$repo/decisions")
+        done
+    else
+        # Find decisions/ in current repo (walk up to git root)
+        local git_root
+        git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
+        if [[ -n "$git_root" && -d "$git_root/decisions" ]]; then
+            search_dirs+=("$git_root/decisions")
+        else
+            echo "No decisions/ directory found in current repo."
+            echo "Use 'decisions --all' to browse all repos."
+            return 1
+        fi
+    fi
+
+    # Build the list: extract id, title, date from frontmatter
+    local entries=()
+    for dir in "${search_dirs[@]}"; do
+        local repo_name="$(basename "$(dirname "$dir")")"
+        for f in "$dir"/*.md(N); do
+            local id title date_created
+            id="$(basename "$f" .md | cut -d- -f1)"
+            # Extract title from H1 line
+            title="$(grep '^# ' "$f" | head -1 | sed 's/^# [0-9]*\. //')"
+            # Extract date-created from frontmatter
+            date_created="$(grep '^date-created:' "$f" | head -1 | sed 's/date-created: //')"
+            if [[ "$1" == "--all" ]]; then
+                entries+=("$(printf "%-4s │ %-10s │ %-12s │ %s" "$id" "$date_created" "$repo_name" "$title")"$'\t'"$f")
+            else
+                entries+=("$(printf "%-4s │ %-10s │ %s" "$id" "$date_created" "$title")"$'\t'"$f")
+            fi
+        done
+    done
+
+    if [[ ${#entries[@]} -eq 0 ]]; then
+        echo "No decisions found."
+        return 1
+    fi
+
+    # fzf with glow preview
+    local selected
+    selected="$(printf '%s\n' "${entries[@]}" | \
+        column -t -s $'\t' | \
+        fzf --ansi \
+            --header 'Decision Register (Enter: open in editor, Esc: close)' \
+            --preview 'echo {} | sed "s/.*\t//" | xargs glow -w $(( COLUMNS / 2 - 4 )) -s dark' \
+            --preview-window 'right:60%:wrap' \
+            --delimiter $'\t' \
+            --with-nth 1)"
+
+    if [[ -n "$selected" ]]; then
+        local file_path
+        file_path="$(echo "$selected" | sed 's/.*\t//')"
+        ${EDITOR:-hx} "$file_path"
+    fi
+}
