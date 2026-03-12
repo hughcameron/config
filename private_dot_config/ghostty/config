@@ -60,6 +60,11 @@ palette = 8=#1d3b53
 # Enable Option key as Alt for terminal applications like Helix
 macos-option-as-alt = true
 
+# Notifications — desktop notify when long-running commands finish (e.g. Claude agents)
+# Only fires when the terminal is unfocused, after commands running ≥5s
+notify-on-command-finish = unfocused
+notify-on-command-finish-action = bell,notify
+
 # Fix yazi horizontal line artifact in preview pane
 # Adjusts box-drawing character thickness to prevent rendering issues
 adjust-box-thickness = -10%
