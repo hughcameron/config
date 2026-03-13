@@ -159,3 +159,6 @@ mas "Xcode", id: 497799835
 
 # Cargo
 cargo "sitemapper"
+
+# Manual installs (no Homebrew formula)
+# bcli (Bear CLI via CloudKit): curl -L https://github.com/mreider/better-bear-cli/releases/latest/download/bcli-macos-universal.tar.gz | tar xz -C ~/.local/bin
