@@ -30,8 +30,9 @@ EOF
     echo "Dumped to: $DUMP_FILE"
     echo "Package count: $(wc -l < "$DUMP_FILE" | tr -d ' ')"
 
-    # Compare against chezmoi-managed brewfile (rendered version)
-    MANAGED_BREWFILE="$HOME/.config/homebrew/brewfile.txt"
+    # Compare against chezmoi-managed brewfile (OS-specific)
+    OS_SUFFIX="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    MANAGED_BREWFILE="$HOME/.config/homebrew/brewfile-${OS_SUFFIX}.txt"
     if [ -f "$MANAGED_BREWFILE" ]; then
       DIFF_OUTPUT=$(diff --unified=0 "$MANAGED_BREWFILE" "$DUMP_FILE" 2>/dev/null || true)
       if [ -n "$DIFF_OUTPUT" ]; then
@@ -110,7 +111,8 @@ EOF
   GIT_DIRTY="clean"
 
   if command -v brew &>/dev/null; then
-    MANAGED_BREWFILE="$HOME/.config/homebrew/brewfile.txt"
+    OS_SUFFIX="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    MANAGED_BREWFILE="$HOME/.config/homebrew/brewfile-${OS_SUFFIX}.txt"
     DUMP_FILE="$REPORT_DIR/brewfile-dump.txt"
     if [ -f "$MANAGED_BREWFILE" ] && [ -f "$DUMP_FILE" ]; then
       if ! diff -q "$MANAGED_BREWFILE" "$DUMP_FILE" &>/dev/null; then
