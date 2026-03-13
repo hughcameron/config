@@ -1,6 +1,18 @@
 # ~/.zshrc - Interactive shell configuration
 # Note: env.sh and path.sh are loaded by ~/.zshenv for all sessions
 
+# History
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+setopt HIST_IGNORE_DUPS      # skip consecutive duplicates
+setopt HIST_IGNORE_ALL_DUPS  # remove older duplicate from history
+setopt HIST_IGNORE_SPACE     # commands starting with space are private
+setopt SHARE_HISTORY         # share history across concurrent sessions
+setopt APPEND_HISTORY        # append, don't overwrite
+setopt INC_APPEND_HISTORY    # write immediately, not at shell exit
+setopt HIST_REDUCE_BLANKS    # clean up whitespace
+
 # Source interactive-only config files
 for file in \
     "$HOME/.config/zsh/secrets.sh" \
