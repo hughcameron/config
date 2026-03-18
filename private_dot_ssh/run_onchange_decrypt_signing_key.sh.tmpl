@@ -1,7 +1,12 @@
 #!/bin/bash
 {{- if eq .chezmoi.os "linux" }}
 # Decrypt signing key on Linux VMs only
-if [ ! -f ~/.ssh/github_vm_access ]; then
+if [ ! -f ~/.ssh/github_vm_access ] || [ ! -s ~/.ssh/github_vm_access ]; then
+    if ! command -v age &>/dev/null; then
+        echo "WARNING: age not installed — skipping signing key decryption"
+        echo "Install age and re-run: chezmoi apply"
+        exit 0
+    fi
     echo "Decrypting git signing key..."
     age -d -i ~/.config/chezmoi/age/keys.txt \
         ~/.local/share/chezmoi/private_dot_ssh/private_encrypted_github_vm_access.age \
