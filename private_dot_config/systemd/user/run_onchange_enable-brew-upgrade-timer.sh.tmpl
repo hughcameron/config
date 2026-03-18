@@ -1,0 +1,21 @@
+#!/bin/bash
+{{- if eq .chezmoi.os "linux" }}
+# Enable brew-upgrade timer whenever unit files change
+# hash: {{ include "private_dot_config/systemd/user/brew-upgrade.timer" | sha256sum }}
+# hash: {{ include "private_dot_config/systemd/user/brew-upgrade.service" | sha256sum }}
+
+if ! command -v systemctl &>/dev/null; then
+    echo "WARNING: systemctl not found — skipping timer enablement"
+    exit 0
+fi
+
+echo "Reloading systemd user units..."
+systemctl --user daemon-reload
+
+echo "Enabling brew-upgrade.timer..."
+systemctl --user enable --now brew-upgrade.timer
+
+echo "brew-upgrade.timer status:"
+systemctl --user status brew-upgrade.timer --no-pager
+systemctl --user list-timers brew-upgrade.timer --no-pager
+{{- end }}
