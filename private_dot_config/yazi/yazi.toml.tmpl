@@ -5,15 +5,15 @@ max_height = 1200
 image_filter = "lanczos3"
 
 [opener]
-helix = [
-    { run = 'hx "$@"', block = true, for = "unix" },
-    { run = 'hx %*',    block = true, for = "windows" }
+nvim = [
+    { run = 'nvim "$@"', block = true, for = "unix" },
+    { run = 'nvim %*',    block = true, for = "windows" }
 ]
 
 [open]
 prepend_rules = [
-    { mime = "text/*", use = "helix" },
-    { mime = "*", use = "helix" },
+    { mime = "text/*", use = "nvim" },
+    { mime = "*", use = "nvim" },
 ]
 
 [plugin]

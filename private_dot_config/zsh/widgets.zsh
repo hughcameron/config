@@ -12,13 +12,13 @@ _yazi_widget() {
 zle -N _yazi_widget
 bindkey '^f' _yazi_widget
 
-# Ctrl+K: Helix editor
-_hx_widget() {
-    command hx
+# Ctrl+K: Neovim editor
+_nvim_widget() {
+    command nvim
     zle reset-prompt
 }
-zle -N _hx_widget
-bindkey '^k' _hx_widget
+zle -N _nvim_widget
+bindkey '^k' _nvim_widget
 
 # Ctrl+G: Navi cheatsheet snippet insertion
 _navi_widget() {
