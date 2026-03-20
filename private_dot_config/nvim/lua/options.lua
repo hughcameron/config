@@ -9,4 +9,18 @@ o.cursorlineopt = "both"
 
 -- Sensible defaults
 o.scrolloff = 8
-o.wrap = false
+o.wrap = true
+o.linebreak = true
+
+-- Use OSC 52 for clipboard (works over SSH via Ghostty)
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+  },
+  paste = {
+    ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
+  },
+}
