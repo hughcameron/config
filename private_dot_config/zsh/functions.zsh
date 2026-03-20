@@ -183,6 +183,6 @@ decisions() {
 
     if [[ -n "$selected" ]]; then
         local file_path="${selected##*$'\t'}"
-        ${EDITOR:-hx} "$file_path"
+        ${EDITOR:-nvim} "$file_path"
     fi
 }
