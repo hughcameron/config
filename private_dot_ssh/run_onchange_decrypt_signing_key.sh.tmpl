@@ -1,12 +1,16 @@
 #!/bin/bash
-{{- if eq .chezmoi.os "linux" }}
-# Decrypt signing key on Linux VMs only
+# Decrypt SSH keys from age-encrypted backups
+# Runs on chezmoi apply when encrypted source files change
+
+if ! command -v age &>/dev/null; then
+    echo "WARNING: age not installed — skipping key decryption"
+    echo "Install age and re-run: chezmoi apply"
+    exit 0
+fi
+
+{{ if eq .chezmoi.os "linux" -}}
+# Decrypt git signing key (Linux only — macOS uses keychain)
 if [ ! -f ~/.ssh/github_vm_access ] || [ ! -s ~/.ssh/github_vm_access ]; then
-    if ! command -v age &>/dev/null; then
-        echo "WARNING: age not installed — skipping signing key decryption"
-        echo "Install age and re-run: chezmoi apply"
-        exit 0
-    fi
     echo "Decrypting git signing key..."
     age -d -i ~/.config/chezmoi/age/keys.txt \
         ~/.local/share/chezmoi/private_dot_ssh/private_encrypted_github_vm_access.age \
@@ -21,4 +25,20 @@ if [ ! -f ~/.ssh/github_vm_access.pub ]; then
     chmod 644 ~/.ssh/github_vm_access.pub
     echo "Git signing public key copied to ~/.ssh/github_vm_access.pub"
 fi
-{{- end }}
+{{ end -}}
+
+# Decrypt beelink SSH key (both macOS and Linux)
+if [ ! -f ~/.ssh/beelink_ed25519 ] || [ ! -s ~/.ssh/beelink_ed25519 ]; then
+    echo "Decrypting beelink SSH key..."
+    age -d -i ~/.config/chezmoi/age/keys.txt \
+        {{ .chezmoi.sourceDir }}/private_dot_ssh/private_encrypted_beelink_ed25519.age \
+        > ~/.ssh/beelink_ed25519
+    chmod 600 ~/.ssh/beelink_ed25519
+    echo "Beelink SSH key decrypted to ~/.ssh/beelink_ed25519"
+fi
+
+if [ ! -f ~/.ssh/beelink_ed25519.pub ]; then
+    cp {{ .chezmoi.sourceDir }}/private_dot_ssh/beelink_ed25519.pub ~/.ssh/beelink_ed25519.pub
+    chmod 644 ~/.ssh/beelink_ed25519.pub
+    echo "Beelink public key copied to ~/.ssh/beelink_ed25519.pub"
+fi
