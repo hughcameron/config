@@ -93,6 +93,21 @@ return {
     opts = {},
   },
 
+  -- GitHub PRs and issues inside nvim
+  {
+    "pwntester/octo.nvim",
+    cmd = "Octo",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-telescope/telescope.nvim",
+      "nvim-tree/nvim-web-devicons",
+    },
+    opts = {},
+    keys = {
+      { "<leader>go", "<cmd>Octo pr list<cr>", desc = "Octo: list PRs" },
+    },
+  },
+
   -- Which-key group labels
   {
     "folke/which-key.nvim",
