@@ -24,9 +24,5 @@ map("t", "<C-l>", "<C-\\><C-N><C-w>l", { desc = "switch window right" })
 map("t", "<C-j>", "<C-\\><C-N><C-w>j", { desc = "switch window down" })
 map("t", "<C-k>", "<C-\\><C-N><C-w>k", { desc = "switch window up" })
 
--- Directory bookmarks — replaces yamb.yazi
-require("dir-bookmarks").setup({
-  leader = "<leader>m",
-})
 
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
