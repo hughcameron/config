@@ -1,3 +1,6 @@
+os:
+  copyToClipboardCmd: "echo '{{.text}}' | osc52copy"
+
 gui:
   theme:
     activeBorderColor:

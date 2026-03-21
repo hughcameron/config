@@ -24,6 +24,12 @@ return {
     },
   },
 
+  -- Fix gitsigns auto-attach (User FilePost fires too early)
+  {
+    "lewis6991/gitsigns.nvim",
+    event = { "BufReadPost", "BufNewFile" },
+  },
+
   -- Git integration — lazygit in a floating terminal
   {
     "kdheepak/lazygit.nvim",
@@ -85,6 +91,17 @@ return {
     ft = { "markdown" },
     dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
     opts = {},
+  },
+
+  -- Which-key group labels
+  {
+    "folke/which-key.nvim",
+    opts = {
+      spec = {
+        { "<leader>m", group = "Bookmarks" },
+        { "<leader>g", group = "Git" },
+      },
+    },
   },
 
   -- File management — edit filesystem like a buffer
