@@ -56,11 +56,6 @@ on   = ["u", "r"]
 run  = "plugin yamb rename_by_key"
 desc = "Rename bookmark by key"
 
-# Session save-and-quit (autosession)
-[[mgr.prepend_keymap]]
-on   = "q"
-run  = "plugin autosession -- save-and-quit"
-desc = "Save session and quit"
 
 # Copy path as local volume path (Beelink mount → local)
 [[mgr.prepend_keymap]]

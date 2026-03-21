@@ -119,6 +119,12 @@ return {
     },
   },
 
+  -- Vim motion practice
+  {
+    "ThePrimeagen/vim-be-good",
+    cmd = "VimBeGood",
+  },
+
   -- File management — edit filesystem like a buffer
   {
     "stevearc/oil.nvim",
