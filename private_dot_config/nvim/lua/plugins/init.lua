@@ -71,6 +71,9 @@ return {
     },
     opts = {
       open_for_directories = true,
+      keymaps = {
+        change_working_directory = "n",
+      },
     },
   },
 
@@ -113,8 +116,22 @@ return {
     "folke/which-key.nvim",
     opts = {
       spec = {
-        { "<leader>m", group = "Bookmarks" },
         { "<leader>g", group = "Git" },
+      },
+    },
+  },
+
+  -- Nvim-tree: side panel with flash.nvim support
+  {
+    "nvim-tree/nvim-tree.lua",
+    opts = {
+      on_attach = function(bufnr)
+        local api = require("nvim-tree.api")
+        api.config.mappings.default_on_attach(bufnr)
+        vim.keymap.del("n", "s", { buffer = bufnr })
+      end,
+      view = {
+        width = 35,
       },
     },
   },
@@ -125,19 +142,4 @@ return {
     cmd = "VimBeGood",
   },
 
-  -- File management — edit filesystem like a buffer
-  {
-    "stevearc/oil.nvim",
-    lazy = false,
-    dependencies = { "nvim-tree/nvim-web-devicons" },
-    opts = {
-      default_file_explorer = true,
-      view_options = {
-        show_hidden = true,
-      },
-    },
-    keys = {
-      { "-", "<cmd>Oil<cr>", desc = "Open parent directory (Oil)" },
-    },
-  },
 }
