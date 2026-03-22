@@ -1,5 +1,8 @@
 # Tool initializations
 
+# Use emacs keybindings for line editing (EDITOR=nvim triggers vi mode)
+bindkey -e
+
 # Custom completions
 fpath=(~/.zsh/completions $fpath)
 

@@ -21,7 +21,7 @@ brew "gitui"
 brew "glow"
 brew "go"
 brew "neovim"
-brew "hf"
+brew "hf", link: false
 brew "jq"
 brew "lazygit"
 brew "marksman"
