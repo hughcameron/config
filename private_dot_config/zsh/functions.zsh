@@ -38,12 +38,12 @@ clone() {
 
     if [[ -d "$target_dir" ]]; then
         echo "Repository '$target_dir' already exists."
-        echo "1) Open in yazi"
+        echo "1) Open in nvim"
         echo "2) Delete and re-clone"
         echo "3) Cancel"
         read -r "choice?Choose [1-3]: "
         case "$choice" in
-            1) cd "$target_dir" && yazi . ; return ;;
+            1) cd "$target_dir" && nvim . ; return ;;
             2) echo "Deleting '$target_dir'..." ; rm -rf "$target_dir" ;;
             3) echo "Operation cancelled." ; return ;;
             *) echo "Invalid choice." ; return 1 ;;
@@ -54,8 +54,8 @@ clone() {
     mkdir -p "$HOME/github/${owner}"
 
     if gh repo clone "$url_to_clone" "$target_dir" -- --progress; then
-        echo "Clone complete. Opening in yazi..."
-        cd "$target_dir" && yazi .
+        echo "Clone complete. Opening in nvim..."
+        cd "$target_dir" && nvim .
     else
         echo "Failed to clone repository."
         return 1
