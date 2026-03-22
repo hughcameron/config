@@ -25,4 +25,8 @@ map("t", "<C-j>", "<C-\\><C-N><C-w>j", { desc = "switch window down" })
 map("t", "<C-k>", "<C-\\><C-N><C-w>k", { desc = "switch window up" })
 
 
+-- LSP symbol navigation
+map("n", "<leader>ls", "<cmd>Telescope lsp_document_symbols<cr>", { desc = "LSP document symbols" })
+map("n", "<leader>lS", "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", { desc = "LSP workspace symbols" })
+
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
