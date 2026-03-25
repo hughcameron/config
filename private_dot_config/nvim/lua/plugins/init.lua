@@ -107,7 +107,9 @@ return {
     },
     opts = {},
     keys = {
-      { "<leader>go", "<cmd>Octo pr list<cr>", desc = "Octo: list PRs" },
+      { "<leader>go", "<cmd>Octo pr list<cr>", desc = "Octo: list PRs (open)" },
+      { "<leader>gm", "<cmd>Octo pr list states=MERGED<cr>", desc = "Octo: list PRs (merged)" },
+      { "<leader>gc", "<cmd>Octo pr list states=CLOSED<cr>", desc = "Octo: list PRs (closed)" },
     },
   },
 
