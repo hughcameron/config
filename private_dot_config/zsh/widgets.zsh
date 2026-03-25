@@ -1,5 +1,8 @@
 # Zle widgets and keybindings
 
+# Disable XON/XOFF flow control so Ctrl+S reaches applications (e.g. nvim)
+stty -ixon
+
 # Ctrl+F: Yazi with CWD tracking and prompt refresh
 _yazi_widget() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
