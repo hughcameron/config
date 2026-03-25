@@ -72,7 +72,7 @@ return {
     opts = {
       open_for_directories = true,
       keymaps = {
-        change_working_directory = "n",
+        change_working_directory = "<c-s>",
       },
     },
   },
