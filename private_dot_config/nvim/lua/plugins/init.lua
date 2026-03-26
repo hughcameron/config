@@ -91,7 +91,7 @@ return {
   -- Multi-cursor (Ctrl+N to select next match, plugin defaults)
   {
     "mg979/vim-visual-multi",
-    event = "VeryLazy",
+    lazy = false,
     init = function()
       vim.g.VM_theme = "neon"
     end,
