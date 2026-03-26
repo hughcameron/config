@@ -154,6 +154,19 @@ return {
   },
 
 
+  -- Suggest better motions (hint mode — doesn't block input)
+  {
+    "m4xshen/hardtime.nvim",
+    event = "VeryLazy",
+    dependencies = { "MunifTanjim/nui.nvim" },
+    opts = {
+      restriction_mode = "hint",
+      restricted_keys = {
+        ["<C-N>"] = {},  -- free for vim-visual-multi
+      },
+    },
+  },
+
   -- Show available motions as virtual text
   {
     "tris203/precognition.nvim",
