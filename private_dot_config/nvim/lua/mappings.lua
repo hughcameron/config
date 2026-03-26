@@ -29,4 +29,7 @@ map("t", "<C-k>", "<C-\\><C-N><C-w>k", { desc = "switch window up" })
 map("n", "<leader>ls", "<cmd>Telescope lsp_document_symbols<cr>", { desc = "LSP document symbols" })
 map("n", "<leader>lS", "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", { desc = "LSP workspace symbols" })
 
+-- Free Ctrl+N from NvChad's nvim-tree toggle (already on <leader>e)
+vim.keymap.del("n", "<C-n>")
+
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
