@@ -88,6 +88,22 @@ return {
     opts = {},
   },
 
+  -- Multi-cursor (VS Code Ctrl+D style)
+  {
+    "mg979/vim-visual-multi",
+    event = "VeryLazy",
+    init = function()
+      vim.g.VM_maps = {
+        ["Find Under"]         = "<C-d>",   -- select word / next match
+        ["Find Subword Under"] = "<C-d>",   -- same in visual mode
+        ["Skip Region"]        = "<C-k>",   -- skip this match
+        ["Remove Region"]      = "<C-p>",   -- undo last selection
+        ["Select All"]         = "<C-S-l>", -- select all matches
+      }
+      vim.g.VM_theme = "neon"
+    end,
+  },
+
   -- Markdown rendering inline
   {
     "MeanderingProgrammer/render-markdown.nvim",
