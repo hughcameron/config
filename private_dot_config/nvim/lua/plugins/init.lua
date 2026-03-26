@@ -158,7 +158,11 @@ return {
     "m4xshen/hardtime.nvim",
     event = "VeryLazy",
     dependencies = { "MunifTanjim/nui.nvim" },
-    opts = {},
+    opts = {
+      disabled_keys = {
+        ["<C-N>"] = {},  -- used by vim-visual-multi
+      },
+    },
   },
 
   -- Show available motions as virtual text
