@@ -128,6 +128,8 @@ return {
     opts = {
       spec = {
         { "<leader>g", group = "Git" },
+        { "<leader>q", group = "Quit/Save" },
+        { "<leader>m", group = "Markdown" },
       },
     },
   },
