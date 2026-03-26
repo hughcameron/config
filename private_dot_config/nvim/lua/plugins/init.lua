@@ -153,17 +153,6 @@ return {
     cmd = "VimBeGood",
   },
 
-  -- Break bad habits — suggests better motions
-  {
-    "m4xshen/hardtime.nvim",
-    event = "VeryLazy",
-    dependencies = { "MunifTanjim/nui.nvim" },
-    opts = {
-      disabled_keys = {
-        ["<C-N>"] = {},  -- used by vim-visual-multi
-      },
-    },
-  },
 
   -- Show available motions as virtual text
   {
