@@ -32,4 +32,7 @@ map("n", "<leader>lS", "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", { des
 -- Free Ctrl+N from NvChad's nvim-tree toggle (already on <leader>e)
 vim.keymap.del("n", "<C-n>")
 
+-- Markdown
+map("n", "<leader>mr", "<cmd>RenderMarkdown toggle<cr>", { desc = "Toggle markdown render" })
+
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
