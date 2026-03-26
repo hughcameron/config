@@ -160,4 +160,19 @@ return {
     cmd = "VimBeGood",
   },
 
+  -- Break bad habits — suggests better motions
+  {
+    "m4xshen/hardtime.nvim",
+    event = "VeryLazy",
+    dependencies = { "MunifTanjim/nui.nvim" },
+    opts = {},
+  },
+
+  -- Show available motions as virtual text
+  {
+    "tris203/precognition.nvim",
+    event = "VeryLazy",
+    opts = {},
+  },
+
 }
