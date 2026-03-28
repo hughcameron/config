@@ -129,7 +129,7 @@ return {
       spec = {
         { "<leader>g", group = "Git" },
         { "<leader>q", group = "Quit/Save" },
-        { "<leader>m", group = "Markdown" },
+        { "<leader>m", group = "Minimap / Markdown" },
       },
     },
   },
@@ -147,6 +147,37 @@ return {
         width = 35,
       },
     },
+  },
+
+  -- Minimap — braille-encoded buffer overview
+  {
+    "echasnovski/mini.map",
+    event = "VeryLazy",
+    keys = {
+      { "<leader>mm", function() require("mini.map").toggle() end, desc = "Toggle minimap" },
+    },
+    opts = function()
+      local map = require("mini.map")
+      return {
+        symbols = {
+          encode = map.gen_encode_symbols.shade("1x1"),
+        },
+        integrations = {
+          map.gen_integration.builtin_search(),
+          map.gen_integration.gitsigns(),
+          map.gen_integration.diagnostic(),
+        },
+        window = {
+          width = 10,
+          winblend = 50,
+        },
+      }
+    end,
+    config = function(_, opts)
+      local map = require("mini.map")
+      map.setup(opts)
+      map.open()
+    end,
   },
 
   -- Vim motion practice
