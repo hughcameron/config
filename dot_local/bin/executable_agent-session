@@ -30,5 +30,10 @@ else
     SESSION="${REPO_NAME}/${AGENT}"
 fi
 
-exec tmux new-session -A -s "$SESSION" -c "$WORKDIR" \
-    "claude --agent $AGENT --dangerously-skip-permissions"
+if [ -n "$WORKTREE" ]; then
+    CLAUDE_CMD="claude --agent $AGENT --dangerously-skip-permissions --worktree $WORKTREE"
+else
+    CLAUDE_CMD="claude --agent $AGENT --dangerously-skip-permissions"
+fi
+
+exec tmux new-session -A -s "$SESSION" -c "$WORKDIR" "$CLAUDE_CMD"
