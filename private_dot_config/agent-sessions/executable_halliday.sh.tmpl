@@ -1,9 +1,0 @@
-#!/bin/bash
-# Launch Halliday agent session on Beelink
-AGENT="halliday"
-WORKDIR="~/github/{{ .projects.halliday.repo_path }}"
-
-echo "Halliday - {{ .projects.halliday.name }} (Beelink)"
-echo ""
-
-exec ssh beelink -t "cd $WORKDIR && claude --agent $AGENT --dangerously-skip-permissions"

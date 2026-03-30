@@ -1,9 +1,0 @@
-#!/bin/bash
-# Launch Stringer agent session on Beelink
-AGENT="stringer"
-WORKDIR="~/github/{{ .projects.stringer.repo_path }}"
-
-echo "Stringer - {{ .projects.stringer.name }} (Beelink)"
-echo ""
-
-exec ssh beelink -t "cd $WORKDIR && claude --agent $AGENT --dangerously-skip-permissions"
