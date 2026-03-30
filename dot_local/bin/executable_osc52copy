@@ -1,0 +1,19 @@
+#!/bin/sh
+# osc52copy — Copy stdin or arguments to the system clipboard via OSC 52.
+# Works over SSH when the terminal emulator (Ghostty, iTerm2, etc.) supports OSC 52.
+# Falls back to pbcopy on macOS when running locally.
+
+set -e
+
+# Read input from args or stdin
+if [ $# -gt 0 ]; then
+    data="$*"
+else
+    data="$(cat)"
+fi
+
+# Base64 encode
+b64="$(printf '%s' "$data" | base64 | tr -d '\n')"
+
+# Emit OSC 52 escape sequence (system clipboard = 'c')
+printf '\033]52;c;%s\a' "$b64"

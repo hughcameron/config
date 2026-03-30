@@ -1,5 +1,5 @@
 os:
-  copyToClipboardCmd: "echo '{{.text}}' | osc52copy"
+  copyToClipboardCmd: "printf '%s' '{{.text}}' | osc52copy"
 
 gui:
   theme:
