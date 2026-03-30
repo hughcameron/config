@@ -1,0 +1,34 @@
+#!/bin/bash
+# Launch a Claude agent in a tmux session, optionally in a git worktree.
+# Usage: agent-session <agent> <repo-path> [worktree-name]
+#
+# Examples:
+#   agent-session mcgill ~/github/hughcameron/hydrofoil
+#   agent-session mcgill ~/github/hughcameron/hydrofoil feature-auth
+
+set -euo pipefail
+
+AGENT="${1:?Usage: agent-session <agent> <repo-path> [worktree]}"
+REPO="${2:?Usage: agent-session <agent> <repo-path> [worktree]}"
+WORKTREE="${3:-}"
+
+# Expand tilde
+REPO="${REPO/#\~/$HOME}"
+
+REPO_NAME="$(basename "$REPO")"
+
+if [ -n "$WORKTREE" ]; then
+    WORKDIR="${REPO}--${WORKTREE}"
+    SESSION="${REPO_NAME}/${WORKTREE}/${AGENT}"
+
+    if [ ! -d "$WORKDIR" ]; then
+        echo "Creating worktree '$WORKTREE' at $WORKDIR"
+        git -C "$REPO" worktree add -B "$WORKTREE" "$WORKDIR"
+    fi
+else
+    WORKDIR="$REPO"
+    SESSION="${REPO_NAME}/${AGENT}"
+fi
+
+exec tmux new-session -A -s "$SESSION" -c "$WORKDIR" \
+    "claude --agent $AGENT --dangerously-skip-permissions"
