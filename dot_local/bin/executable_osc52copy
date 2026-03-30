@@ -15,5 +15,6 @@ fi
 # Base64 encode
 b64="$(printf '%s' "$data" | base64 | tr -d '\n')"
 
-# Emit OSC 52 escape sequence (system clipboard = 'c')
-printf '\033]52;c;%s\a' "$b64"
+# Emit OSC 52 escape sequence to the terminal directly (not stdout,
+# which may be captured by the calling program, e.g. Lazygit).
+printf '\033]52;c;%s\a' "$b64" > /dev/tty
