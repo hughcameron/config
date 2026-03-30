@@ -3,7 +3,7 @@
 # Disable XON/XOFF flow control so Ctrl+S reaches applications (e.g. nvim)
 stty -ixon
 
-# Ctrl+F: Yazi with CWD tracking and prompt refresh
+# Ctrl+Y: Yazi with CWD tracking and prompt refresh
 _yazi_widget() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
     command yazi --cwd-file="$tmp"
@@ -13,7 +13,7 @@ _yazi_widget() {
     zle reset-prompt
 }
 zle -N _yazi_widget
-bindkey '^f' _yazi_widget
+bindkey '^y' _yazi_widget
 
 # Ctrl+K: Neovim editor
 _nvim_widget() {
