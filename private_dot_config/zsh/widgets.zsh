@@ -53,6 +53,11 @@ _lazygit_widget() {
 zle -N _lazygit_widget
 bindkey '^o' _lazygit_widget
 
+# Ctrl+E: Edit current command line in nvim
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^e' edit-command-line
+
 # Ctrl+B: Decision register browser (fzf + glow)
 _decisions_widget() {
     decisions

@@ -35,6 +35,10 @@ vim.keymap.del("n", "<C-n>")
 -- Markdown
 map("n", "<leader>mr", "<cmd>RenderMarkdown toggle<cr>", { desc = "Toggle markdown render" })
 
+-- Line navigation
+map({"n", "v"}, "gh", "^", { desc = "Go to first non-blank character" })
+map({"n", "v"}, "gl", "$", { desc = "Go to end of line" })
+
 -- Quit / Save / Close
 map("n", "<leader>qq", "<cmd>wqa<cr>", { desc = "Save and quit Neovim" })
 map("n", "<leader>qw", "<cmd>w<cr>", { desc = "Save buffer" })

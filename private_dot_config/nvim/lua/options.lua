@@ -7,6 +7,9 @@ o.relativenumber = true
 o.mouse = ""
 o.cursorlineopt = "both"
 
+-- Allow cursor one past end of line in normal mode
+o.virtualedit = "onemore"
+
 -- Sensible defaults
 o.scrolloff = 8
 o.wrap = true

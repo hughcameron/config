@@ -35,6 +35,7 @@ brew "gh"
 brew "git-filter-repo"
 brew "glow"
 brew "go"
+brew "gonzo"
 brew "goreleaser"
 brew "hf"
 brew "htop"
@@ -78,11 +79,12 @@ brew "ty"
 brew "uv"
 brew "vim"
 brew "visidata"
+brew "watch"
 brew "wget"
 brew "yaml-language-server"
 brew "xan"
 brew "xq"
-brew "yazi"
+brew "yazi", args: ["HEAD"]
 brew "youplot"
 brew "yq"
 brew "yt-dlp"
@@ -133,6 +135,7 @@ cask "google-chrome"
 cask "hammerspoon"
 cask "hyperkey"
 cask "microsoft-teams"
+cask "mochi"
 cask "monitorcontrol"
 cask "motrix"
 cask "numi"
@@ -163,6 +166,9 @@ mas "Tailscale", id: 1475387142
 mas "Things", id: 904280696
 mas "UTC Time", id: 1538245904
 mas "Xcode", id: 497799835
+
+# VSCode extensions
+vscode "darkriszty.markdown-table-prettify"
 
 # Cargo
 cargo "model2vec-rs"
