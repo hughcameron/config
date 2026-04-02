@@ -6,8 +6,16 @@ bindkey -e
 # Custom completions
 fpath=(~/.zsh/completions $fpath)
 
-# Initialize zsh completion system (needed by carapace and other tools)
-autoload -Uz compinit && compinit
+# zsh-autocomplete: real-time type-ahead completion (replaces manual compinit)
+# Must be sourced before any compdef calls (e.g. carapace)
+if [[ -f /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh ]]; then
+    source /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+elif [[ -f /home/linuxbrew/.linuxbrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh ]]; then
+    source /home/linuxbrew/.linuxbrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+else
+    # Fallback: manual compinit if zsh-autocomplete not installed
+    autoload -Uz compinit && compinit
+fi
 
 # Starship prompt
 eval "$(starship init zsh)"

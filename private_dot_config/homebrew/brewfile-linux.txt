@@ -45,6 +45,7 @@ brew "yaml-language-server"
 brew "yazi"
 brew "youplot"
 brew "zoxide"
+brew "zsh-autocomplete"
 brew "hashicorp/tap/terraform"
 brew "meridian-online/tap/finetype"
 
