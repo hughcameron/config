@@ -15,6 +15,7 @@
       "alt-shift-d": ["task::Spawn", { "task_name": "Run in DuckDB" }],
       "alt-shift-d v": ["task::Spawn", { "task_name": "DuckDB to Visidata" }],
       "alt-shift-d j": ["task::Spawn", { "task_name": "DuckDB to JLESS" }],
+      "cmd-shift-t": "workspace::NewCenterTerminal",
     },
   },
   {
@@ -33,4 +34,41 @@
       // "j k": ["workspace::SendKeystrokes", "escape"]
     },
   },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-shift-t": "pane::ReopenClosedItem"
+    }
+  },
+  {
+    "context": "Workspace",
+    "unbind": {
+      "cmd-shift-t": "pane::ReopenClosedItem"
+    }
+  },
+  // Vim sneak: s + two chars to jump forward, S + two chars to jump backward
+  {
+    "context": "vim_mode == normal || vim_mode == visual",
+    "bindings": {
+      "s": "vim::PushSneak",
+      "shift-s": "vim::PushSneakBackward"
+    }
+  },
+  // Surround in visual mode: select text then S + char to wrap
+  {
+    "context": "vim_mode == visual",
+    "bindings": {
+      "shift-s": "vim::PushAddSurrounds"
+    }
+  },
+  // Navigate into/out of docks (file tree, panels) with ctrl-w
+  {
+    "context": "Dock",
+    "bindings": {
+      "ctrl-w h": "workspace::ActivatePaneLeft",
+      "ctrl-w l": "workspace::ActivatePaneRight",
+      "ctrl-w k": "workspace::ActivatePaneUp",
+      "ctrl-w j": "workspace::ActivatePaneDown"
+    }
+  }
 ]

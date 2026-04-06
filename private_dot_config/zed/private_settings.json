@@ -7,6 +7,13 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "vim_mode": true,
+  "vim": {
+    "use_system_clipboard": "always",
+    "use_smartcase_find": true,
+    "toggle_relative_line_numbers": true,
+    "highlight_on_yank_duration": 200
+  },
   "use_system_window_tabs": true,
   "disable_ai": false,
   "agent_servers": {
@@ -24,18 +31,33 @@
       "args": [],
       "projects": [
         {
-          "paths": ["/home/hugh"],
+          "paths": [
+            "/home/hugh"
+          ]
         },
         {
-          "paths": ["/home/hugh_cameron"],
-        },
-      ],
+          "paths": [
+            "/home/hugh_cameron"
+          ]
+        }
+      ]
     },
     {
       "host": "garden-patch.us-west1-b.sun-cloud-garden",
       "args": [],
-      "projects": [],
+      "projects": []
     },
+    {
+      "host": "beelink",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/home/hugh/github/hughcameron/config/./"
+          ]
+        }
+      ]
+    }
   ],
   "edit_predictions": {
     "mode": "subtle",
@@ -45,7 +67,11 @@
     },
     "enabled_in_text_threads": false,
   },
-  "icon_theme": "Warm Charmed Icons",
+  "icon_theme": {
+    "mode": "light",
+    "light": "Warm Charmed Icons",
+    "dark": "Warm Charmed Icons"
+  },
   "agent": {
     "tool_permissions": {
       "default": "allow",
@@ -64,11 +90,19 @@
   "theme": {
     "mode": "dark",
     "light": "One Light",
-    "dark": "One Dark",
+    "dark": "Night Owl Dark",
+  },
+  "current_line_highlight": "line",
+  "relative_line_numbers": "enabled",
+  "vertical_scroll_margin": 8,
+  "minimap": {
+    "show": "always",
   },
   "experimental.theme_overrides": {
     "terminal.ansi.green": "#009193",
     "terminal.ansi.bright_green": "#009193",
+    "terminal.ansi.black": "#0b2841",
+    "terminal.ansi.bright_black": "#1d3b53",
     "created": "#009193",
     "syntax": {
       "boolean": {
@@ -143,6 +177,7 @@
   "terminal": {
     "shell": "system",
     "detect_venv": "off",
+    "working_directory": "current_project_directory",
   },
   "lsp": {
     "nu": {
