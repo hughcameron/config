@@ -1,15 +1,17 @@
 #!/bin/bash
 # Launch a Claude agent in a tmux session.
-# Usage: agent-session <agent> <repo-path>
+# Usage: agent-session <agent> [repo-path]
+#
+# If repo-path is omitted, defaults to the current directory.
 #
 # Examples:
+#   agent-session nightingale              # uses $PWD
 #   agent-session mcgill ~/github/hughcameron/hydrofoil
-#   agent-session nightingale ~/github/hughcameron/finetype
 
 set -euo pipefail
 
-AGENT="${1:?Usage: agent-session <agent> <repo-path>}"
-REPO="${2:?Usage: agent-session <agent> <repo-path>}"
+AGENT="${1:?Usage: agent-session <agent> [repo-path]}"
+REPO="${2:-$PWD}"
 
 # Expand tilde
 REPO="${REPO/#\~/$HOME}"
@@ -17,4 +19,11 @@ REPO="${REPO/#\~/$HOME}"
 REPO_NAME="$(basename "$REPO")"
 SESSION="${REPO_NAME}/${AGENT}"
 
-exec tmux new-session -A -s "$SESSION" -c "$REPO" "claude --agent $AGENT --dangerously-skip-permissions"
+# OS-specific permission mode
+case "$(uname -s)" in
+  Linux)  PERMS="--dangerously-skip-permissions" ;;
+  Darwin) PERMS="--permission-mode acceptEdits" ;;
+  *)      PERMS="" ;;
+esac
+
+exec tmux new-session -A -s "$SESSION" -c "$REPO" "claude --agent $AGENT $PERMS"
