@@ -178,6 +178,7 @@
     "shell": "system",
     "detect_venv": "off",
     "working_directory": "current_project_directory",
+    "option_as_meta": true,
   },
   "lsp": {
     "nu": {
