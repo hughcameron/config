@@ -10,9 +10,10 @@
   "use_system_window_tabs": true,
   "disable_ai": false,
   "agent_servers": {
-    "claude": {
-      "default_model": "sonnet",
+    "claude-acp": {
+      "type": "registry",
       "default_mode": "acceptEdits",
+      "default_model": "sonnet",
     },
   },
   "agent_buffer_font_size": 18.0,
@@ -46,12 +47,14 @@
   },
   "icon_theme": "Warm Charmed Icons",
   "agent": {
+    "tool_permissions": {
+      "default": "allow",
+    },
     "default_model": {
       "provider": "anthropic",
       "model": "claude-sonnet-4",
     },
     "model_parameters": [],
-    "always_allow_tool_actions": true,
   },
   "ui_font_size": 18.0,
   "buffer_font_size": 18.0,
