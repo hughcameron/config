@@ -1,0 +1,336 @@
+#!/usr/bin/env bash
+# zed-theme-check — Download Zed themes and inspect background colors.
+#
+# Usage:
+#   zed-theme-check <github-url|local-file> [...]
+#   zed-theme-check --registry [--top N]
+#   zed-theme-check --target '#011627' <url> [...]
+#
+# Options:
+#   --registry       Scan the full Zed extension registry for themes
+#   --top N          Show top N closest matches (default: 20, use with --registry)
+#   --target HEX     Target background color to compare against (default: #011627)
+#   --parallel N     Max parallel downloads (default: 20)
+#   --cache-dir DIR  Cache directory (default: ~/.cache/zed-theme-check)
+#
+# Examples:
+#   zed-theme-check https://github.com/elGusto/night-owlz/blob/main/themes/NightOwl.json
+#   zed-theme-check --registry --top 10
+#   zed-theme-check --registry --target '#1a1b26' --top 30
+
+set -euo pipefail
+
+TARGET="#011627"
+SOURCES=()
+REGISTRY_MODE=false
+TOP_N=20
+PARALLEL=20
+CACHE_DIR="${HOME}/.cache/zed-theme-check"
+
+# --- Argument parsing ---
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --registry|-r)
+      REGISTRY_MODE=true
+      shift
+      ;;
+    --top)
+      TOP_N="$2"
+      shift 2
+      ;;
+    --parallel)
+      PARALLEL="$2"
+      shift 2
+      ;;
+    --cache-dir)
+      CACHE_DIR="$2"
+      shift 2
+      ;;
+    --target|-t)
+      TARGET="$2"
+      shift 2
+      ;;
+    -h|--help)
+      sed -n '2,/^$/s/^# //p' "$0"
+      exit 0
+      ;;
+    *)
+      SOURCES+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ "$REGISTRY_MODE" == false ]] && [[ ${#SOURCES[@]} -eq 0 ]]; then
+  echo "Usage: zed-theme-check [--registry] [--target '#HEX'] [<github-url|file> ...]" >&2
+  exit 1
+fi
+
+# --- Hex color to RGB ---
+hex_to_rgb() {
+  local hex="${1#\#}"
+  printf "%d %d %d" "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
+}
+
+# --- Euclidean distance in RGB space (squared, avoids sqrt issues) ---
+color_distance() {
+  local r1 g1 b1 r2 g2 b2
+  read -r r1 g1 b1 <<< "$(hex_to_rgb "$1")"
+  read -r r2 g2 b2 <<< "$(hex_to_rgb "$2")"
+  local dr=$(( r1 - r2 ))
+  local dg=$(( g1 - g2 ))
+  local db=$(( b1 - b2 ))
+  echo $(( dr*dr + dg*dg + db*db ))
+}
+
+# --- Resolve a source to a local JSON file path ---
+resolve_source() {
+  local src="$1"
+
+  # Local file
+  if [[ -f "$src" ]]; then
+    echo "$src"
+    return
+  fi
+
+  # GitHub blob URL → raw URL (try refs/heads/ prefix first, then bare)
+  if [[ "$src" =~ github\.com/([^/]+/[^/]+)/blob/(.+) ]]; then
+    local repo="${BASH_REMATCH[1]}"
+    local path="${BASH_REMATCH[2]}"
+    src="https://raw.githubusercontent.com/${repo}/refs/heads/${path}"
+  fi
+
+  # Download to temp file
+  local tmp
+  tmp=$(mktemp /tmp/zed-theme-XXXXXX.json)
+  if curl -fsSL "$src" -o "$tmp" 2>/dev/null; then
+    echo "$tmp"
+  else
+    echo "  ✗ Failed to download: $src" >&2
+    rm -f "$tmp"
+    return 1
+  fi
+}
+
+# --- Color swatch (24-bit terminal color) ---
+swatch() {
+  local hex="${1#\#}"
+  local r g b
+  r=$((16#${hex:0:2}))
+  g=$((16#${hex:2:2}))
+  b=$((16#${hex:4:2}))
+  printf "\033[48;2;%d;%d;%dm    \033[0m" "$r" "$g" "$b"
+}
+
+# --- Process a single theme file ---
+process_theme() {
+  local file="$1"
+  local src_label="$2"
+
+  # Validate JSON
+  if ! jq empty "$file" 2>/dev/null; then
+    echo "  ✗ Invalid JSON" >&2
+    return 1
+  fi
+
+  local theme_name
+  theme_name=$(jq -r '.name // "unknown"' "$file")
+  echo "  Theme: $theme_name"
+
+  # Extract all variants and their background colors
+  local count
+  count=$(jq '.themes | length' "$file")
+
+  for ((i = 0; i < count; i++)); do
+    local variant_name appearance bg editor_bg terminal_bg
+    variant_name=$(jq -r ".themes[$i].name // \"variant-$i\"" "$file")
+    appearance=$(jq -r ".themes[$i].appearance // \"unknown\"" "$file")
+    bg=$(jq -r ".themes[$i].style.background // \"not set\"" "$file")
+    editor_bg=$(jq -r ".themes[$i].style.editor.background // \"not set\"" "$file")
+    terminal_bg=$(jq -r ".themes[$i].style.terminal.background // \"not set\"" "$file")
+
+    echo ""
+    echo "  ┌─ $variant_name ($appearance)"
+
+    if [[ "$bg" != "not set" ]]; then
+      local dist
+      dist=$(color_distance "$bg" "$TARGET")
+      echo "  │  background:          $(swatch "$bg") $bg  (distance: $dist from $TARGET)"
+    else
+      echo "  │  background:          not set"
+    fi
+
+    if [[ "$editor_bg" != "not set" ]]; then
+      echo "  │  editor.background:   $(swatch "$editor_bg") $editor_bg"
+    fi
+
+    if [[ "$terminal_bg" != "not set" ]]; then
+      echo "  │  terminal.background: $(swatch "$terminal_bg") $terminal_bg"
+    fi
+
+    echo "  └─"
+  done
+}
+
+# --- Registry mode ---
+run_registry_scan() {
+  mkdir -p "$CACHE_DIR"
+
+  local gitmodules_url="https://raw.githubusercontent.com/zed-industries/extensions/refs/heads/main/.gitmodules"
+  local extensions_url="https://raw.githubusercontent.com/zed-industries/extensions/refs/heads/main/extensions.toml"
+
+  echo "Fetching extension registry..." >&2
+
+  # Download registry files
+  local gitmodules extensions_toml
+  gitmodules=$(curl -fsSL "$gitmodules_url") || { echo "✗ Failed to fetch .gitmodules" >&2; return 1; }
+  extensions_toml=$(curl -fsSL "$extensions_url") || { echo "✗ Failed to fetch extensions.toml" >&2; return 1; }
+
+  # Build list: theme_id \t repo_slug (owner/repo)
+  local theme_ids
+  theme_ids=$(echo "$extensions_toml" | grep -oP '^\[\K[^\]]*-theme(?=\])' | sort)
+  local theme_count
+  theme_count=$(echo "$theme_ids" | wc -l)
+  echo "Found $theme_count theme extensions" >&2
+
+  # Write a self-contained worker script (avoids export -f issues with xargs)
+  local worker
+  worker=$(mktemp /tmp/zed-worker-XXXXXX.sh)
+  cat > "$worker" << 'WORKER_EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+REPO_SLUG="$1"
+CACHE_DIR="$2"
+TARGET="$3"
+
+# Find the default branch
+working_branch=""
+for branch in main master; do
+  if curl -fsSL -o /dev/null "https://raw.githubusercontent.com/${REPO_SLUG}/refs/heads/${branch}/extension.toml" 2>/dev/null; then
+    working_branch="$branch"
+    break
+  fi
+done
+[[ -z "$working_branch" ]] && exit 0
+
+# List theme JSON files via GitHub contents API (authenticated via gh)
+theme_files=$(gh api "repos/${REPO_SLUG}/contents/themes" --jq '.[]? | select(.name | endswith(".json")) | .name' 2>/dev/null || true)
+[[ -z "$theme_files" ]] && exit 0
+
+# Hex → RGB distance (squared)
+color_dist() {
+  local h1="${1#\#}" h2="${2#\#}"
+  local r1=$((16#${h1:0:2})) g1=$((16#${h1:2:2})) b1=$((16#${h1:4:2}))
+  local r2=$((16#${h2:0:2})) g2=$((16#${h2:2:2})) b2=$((16#${h2:4:2}))
+  local dr=$(( r1-r2 )) dg=$(( g1-g2 )) db=$(( b1-b2 ))
+  echo $(( dr*dr + dg*dg + db*db ))
+}
+
+while IFS= read -r fname; do
+  [[ -z "$fname" ]] && continue
+  cache_file="${CACHE_DIR}/$(echo "${REPO_SLUG}__themes__${fname}" | tr '/' '_')"
+
+  # Download if not cached
+  if [[ ! -f "$cache_file" ]]; then
+    curl -fsSL "https://raw.githubusercontent.com/${REPO_SLUG}/refs/heads/${working_branch}/themes/${fname}" \
+      -o "$cache_file" 2>/dev/null || { rm -f "$cache_file"; continue; }
+    jq empty "$cache_file" 2>/dev/null || { rm -f "$cache_file"; continue; }
+  fi
+
+  # Extract dark theme backgrounds (only valid 7-char hex colors)
+  jq -r '
+    .name as $theme_name |
+    .themes[]? |
+    select(.appearance == "dark") |
+    select(.style.background != null) |
+    select(.style.background | test("^#[0-9a-fA-F]{6}$")) |
+    "\(.style.background)\t\(.name)\t\($theme_name)"
+  ' "$cache_file" 2>/dev/null | while IFS=$'\t' read -r bg variant theme_name; do
+    dist=$(color_dist "$bg" "$TARGET")
+    printf "%s\t%s\t%s\t%s\thttps://github.com/%s\n" "$dist" "$bg" "$variant" "$theme_name" "$REPO_SLUG"
+  done
+done <<< "$theme_files"
+WORKER_EOF
+  chmod +x "$worker"
+
+  # Build repo slug list from .gitmodules
+  local results_file
+  results_file=$(mktemp /tmp/zed-scan-results-XXXXXX.tsv)
+
+  local scanned=0 failed=0
+  local pids=()
+
+  while IFS= read -r theme_id; do
+    # Extract repo URL from .gitmodules → slug
+    local repo_url
+    repo_url=$(echo "$gitmodules" | grep -A2 "extensions/${theme_id}\"]" | grep 'url = ' | sed 's/.*url = //' | sed 's/\.git$//')
+    [[ -z "$repo_url" ]] && continue
+    local repo_slug
+    repo_slug=$(echo "$repo_url" | sed 's|https://github.com/||')
+
+    # Launch worker in background (30s timeout per repo)
+    timeout 30 "$worker" "$repo_slug" "$CACHE_DIR" "$TARGET" >> "$results_file" 2>/dev/null &
+    pids+=($!)
+    scanned=$((scanned + 1))
+
+    # Throttle: wait when we hit PARALLEL limit
+    if [[ ${#pids[@]} -ge $PARALLEL ]]; then
+      wait "${pids[0]}" 2>/dev/null || true
+      pids=("${pids[@]:1}")
+    fi
+
+    # Progress
+    if (( scanned % 25 == 0 )); then
+      echo "  ... $scanned / $theme_count repos queued" >&2
+    fi
+  done <<< "$theme_ids"
+
+  # Wait for remaining
+  for pid in "${pids[@]}"; do
+    wait "$pid" 2>/dev/null || true
+  done
+  rm -f "$worker"
+
+  # Sort and display
+  local result_count
+  result_count=$(wc -l < "$results_file")
+  echo "" >&2
+  echo "Scanned $scanned repos, found $result_count dark variants with backgrounds" >&2
+  echo "" >&2
+
+  echo "Target background: $(swatch "$TARGET") $TARGET"
+  echo ""
+  echo "Top $TOP_N closest dark themes:"
+  echo ""
+  printf "%-6s  %-9s  %-4s  %-35s  %s\n" "DIST" "COLOR" "" "VARIANT" "REPO"
+  printf "%-6s  %-9s  %-4s  %-35s  %s\n" "------" "---------" "----" "-----------------------------------" "----"
+
+  sort -t$'\t' -k1 -n "$results_file" | head -n "$TOP_N" | while IFS=$'\t' read -r dist bg variant_name theme_name repo_url; do
+    printf "%-6s  %-9s  %s  %-35s  %s\n" "$dist" "$bg" "$(swatch "$bg")" "$variant_name" "$repo_url"
+  done
+
+  rm -f "$results_file"
+}
+
+# --- Main ---
+if [[ "$REGISTRY_MODE" == true ]]; then
+  run_registry_scan
+  exit $?
+fi
+
+echo "Target background: $(swatch "$TARGET") $TARGET"
+echo ""
+
+for src in "${SOURCES[@]}"; do
+  echo "━━━ $src"
+  local_file=$(resolve_source "$src") || continue
+
+  process_theme "$local_file" "$src"
+
+  # Clean up temp files
+  if [[ "$local_file" == /tmp/zed-theme-* ]]; then
+    rm -f "$local_file"
+  fi
+
+  echo ""
+done
