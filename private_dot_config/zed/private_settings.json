@@ -99,6 +99,7 @@
     "show": "always",
   },
   "experimental.theme_overrides": {
+    "title_bar.inactive_background": "#0d1520",
     "terminal.ansi.green": "#009193",
     "terminal.ansi.bright_green": "#009193",
     "terminal.ansi.black": "#0b2841",
