@@ -84,64 +84,13 @@
     "theme": {
         "mode": "dark",
         "light": "One Light",
-        "dark": "Nightfox - opaque"
+        "dark": "Night Owl"
     },
     "current_line_highlight": "line",
     "relative_line_numbers": "enabled",
     "vertical_scroll_margin": 8,
     "minimap": {
         "show": "always"
-    },
-    "experimental.theme_overrides": {
-        "title_bar.background": "#222f41",
-        "editor.background": "#011627",
-        "terminal.background": "#011627",
-        "terminal.ansi.green": "#009193",
-        "terminal.ansi.bright_green": "#009193",
-        "terminal.ansi.black": "#0b2841",
-        "terminal.ansi.bright_black": "#1d3b53",
-        "created": "#009193",
-        "syntax": {
-            "boolean": {
-                "color": "#b176ed"
-            },
-            "number": {
-                "color": "#ff8155"
-            },
-            "constant": {
-                "color": "#ff5970"
-            },
-            "string": {
-                "color": "#009193"
-            },
-            "string.escape": {
-                "color": "#009193"
-            },
-            "string.regex": {
-                "color": "#009193"
-            },
-            "string.special": {
-                "color": "#009193"
-            },
-            "string.special.symbol": {
-                "color": "#009193"
-            },
-            "text.literal": {
-                "color": "#009193"
-            },
-            "comment": {
-                "font_style": "italic"
-            },
-            "comment.doc": {
-                "font_style": "italic"
-            },
-            "keyword": {
-                "font_style": "italic"
-            },
-            "function": {
-                "font_style": "italic"
-            }
-        }
     },
     "languages": {
         "Python": {
