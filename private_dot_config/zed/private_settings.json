@@ -94,6 +94,8 @@
     },
     "experimental.theme_overrides": {
         "title_bar.background": "#222f41",
+        "editor.background": "#011627",
+        "terminal.background": "#011627",
         "terminal.ansi.green": "#009193",
         "terminal.ansi.bright_green": "#009193",
         "terminal.ansi.black": "#0b2841",
