@@ -170,6 +170,9 @@ mas "Xcode", id: 497799835
 
 # VSCode extensions
 vscode "darkriszty.markdown-table-prettify"
+vscode "mermaidchart.vscode-mermaid-chart"
+vscode "ms-azuretools.vscode-containers"
+vscode "ms-vscode-remote.remote-containers"
 
 # Cargo
 cargo "model2vec-rs"

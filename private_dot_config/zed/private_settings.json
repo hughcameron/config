@@ -7,131 +7,131 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-    "vim_mode": true,
-    "vim": {
-        "use_system_clipboard": "always",
-        "use_smartcase_find": true,
-        "toggle_relative_line_numbers": true,
-        "highlight_on_yank_duration": 200
+  "vim_mode": true,
+  "vim": {
+    "use_system_clipboard": "always",
+    "use_smartcase_find": true,
+    "toggle_relative_line_numbers": true,
+    "highlight_on_yank_duration": 200,
+  },
+  "use_system_window_tabs": true,
+  "disable_ai": false,
+  "agent_servers": {
+    "claude-acp": {
+      "type": "registry",
+      "default_mode": "acceptEdits",
+      "default_model": "sonnet",
     },
-    "use_system_window_tabs": true,
-    "disable_ai": false,
-    "agent_servers": {
-        "claude-acp": {
-            "type": "registry",
-            "default_mode": "acceptEdits",
-            "default_model": "sonnet"
-        }
-    },
-    "agent_buffer_font_size": 18.0,
-    "buffer_font_weight": 400.0,
-    "ssh_connections": [
+  },
+  "agent_buffer_font_size": 18.0,
+  "buffer_font_weight": 400.0,
+  "ssh_connections": [
+    {
+      "host": "gcp",
+      "args": [],
+      "projects": [
         {
-            "host": "gcp",
-            "args": [],
-            "projects": [
-                {
-                    "paths": ["/home/hugh"]
-                },
-                {
-                    "paths": ["/home/hugh_cameron"]
-                }
-            ]
+          "paths": ["/home/hugh"],
         },
         {
-            "host": "garden-patch.us-west1-b.sun-cloud-garden",
-            "args": [],
-            "projects": []
+          "paths": ["/home/hugh_cameron"],
         },
+      ],
+    },
+    {
+      "host": "garden-patch.us-west1-b.sun-cloud-garden",
+      "args": [],
+      "projects": [],
+    },
+    {
+      "host": "beelink",
+      "args": [],
+      "projects": [
         {
-            "host": "beelink",
-            "args": [],
-            "projects": [
-                {
-                    "paths": ["/home/hugh/github/hughcameron/config/./"]
-                }
-            ]
-        }
-    ],
-    "edit_predictions": {
-        "mode": "subtle",
-        "copilot": {
-            "proxy": null,
-            "proxy_no_verify": null
+          "paths": ["/home/hugh/github/hughcameron/config/./"],
         },
-        "enabled_in_text_threads": false
+      ],
     },
-    "icon_theme": {
-        "mode": "light",
-        "light": "Warm Charmed Icons",
-        "dark": "Warm Charmed Icons"
+  ],
+  "edit_predictions": {
+    "mode": "subtle",
+    "copilot": {
+      "proxy": null,
+      "proxy_no_verify": null,
     },
-    "agent": {
-        "tool_permissions": {
-            "default": "allow"
+    "enabled_in_text_threads": false,
+  },
+  "icon_theme": {
+    "mode": "light",
+    "light": "Warm Charmed Icons",
+    "dark": "Warm Charmed Icons",
+  },
+  "agent": {
+    "tool_permissions": {
+      "default": "allow",
+    },
+    "default_model": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4",
+    },
+    "model_parameters": [],
+  },
+  "ui_font_size": 18.0,
+  "buffer_font_size": 18.0,
+  "agent_ui_font_size": 18.0,
+  "ui_font_family": "JetBrainsMono Nerd Font",
+  "buffer_font_family": "JetBrainsMono Nerd Font",
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "Night Owl",
+  },
+  "current_line_highlight": "line",
+  "relative_line_numbers": "enabled",
+  "vertical_scroll_margin": 8,
+  "minimap": {
+    "show": "always",
+  },
+  "languages": {
+    "Python": {
+      "language_servers": [
+        "ty",
+        "ruff",
+        "!basedpyright",
+        "!pyrefly",
+        "!pyright",
+        "!pylsp",
+      ],
+    },
+    "SQL": {
+      "format_on_save": "off",
+      "formatter": {
+        "external": {
+          "command": "/opt/homebrew/bin/sql-formatter",
+          "arguments": [
+            "--config",
+            "/Users/hugh/.config/sql/duckdb.sqlformatrc.json",
+          ],
         },
-        "default_model": {
-            "provider": "anthropic",
-            "model": "claude-sonnet-4"
-        },
-        "model_parameters": []
+      },
     },
-    "ui_font_size": 18.0,
-    "buffer_font_size": 18.0,
-    "agent_ui_font_size": 18.0,
-    "ui_font_family": "JetBrainsMono Nerd Font",
-    "buffer_font_family": "JetBrainsMono Nerd Font",
-    "theme": {
-        "mode": "dark",
-        "light": "One Light",
-        "dark": "Night Owl"
-    },
-    "current_line_highlight": "line",
-    "relative_line_numbers": "enabled",
-    "vertical_scroll_margin": 8,
-    "minimap": {
-        "show": "always"
-    },
-    "languages": {
-        "Python": {
-            "language_servers": [
-                "ty",
-                "ruff",
-                "!basedpyright",
-                "!pyrefly",
-                "!pyright",
-                "!pylsp"
-            ]
-        },
-        "SQL": {
-            "format_on_save": "off",
-            "formatter": {
-                "external": {
-                    "command": "/opt/homebrew/bin/sql-formatter",
-                    "arguments": [
-                        "--config",
-                        "/Users/hugh/.config/sql/duckdb.sqlformatrc.json"
-                    ]
-                }
-            }
-        }
-    },
+  },
 
-    "tab_bar": {
-        "show_pinned_tabs_in_separate_row": true
+  "tab_bar": {
+    "show_pinned_tabs_in_separate_row": true,
+  },
+  "terminal": {
+    "shell": "system",
+    "detect_venv": "off",
+    "working_directory": "current_project_directory",
+    "option_as_meta": true,
+  },
+  "lsp": {
+    "nu": {
+      "binary": {
+        "path": "/opt/homebrew/bin/nu",
+        "arguments": ["--config", "~/.config/nushell/lsp.nu", "--lsp"],
+      },
     },
-    "terminal": {
-        "shell": "system",
-        "detect_venv": "off",
-        "working_directory": "current_project_directory",
-        "option_as_meta": true
-    },
-    "lsp": {
-        "nu": {
-            "binary": {
-                "path": "/opt/homebrew/bin/nu",
-                "arguments": ["--config", "~/.config/nushell/lsp.nu", "--lsp"]
-            }
-        }
-    }
+  },
 }
