@@ -19,10 +19,17 @@ REPO="${REPO/#\~/$HOME}"
 REPO_NAME="$(basename "$REPO")"
 SESSION="${REPO_NAME}/${AGENT}"
 
-# OS-specific permission mode
+# Permission mode: Carson gets acceptEdits (system config is risky to bypass),
+# all other agents get bypassPermissions for uninterrupted work.
 case "$(uname -s)" in
   Linux)  PERMS="--dangerously-skip-permissions" ;;
-  Darwin) PERMS="--dangerously-skip-permissions" ;;
+  Darwin)
+    if [ "$AGENT" = "carson" ]; then
+      PERMS="--permission-mode acceptEdits"
+    else
+      PERMS="--dangerously-skip-permissions"
+    fi
+    ;;
   *)      PERMS="" ;;
 esac
 
