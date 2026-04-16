@@ -22,7 +22,7 @@ SESSION="${REPO_NAME}/${AGENT}"
 # OS-specific permission mode
 case "$(uname -s)" in
   Linux)  PERMS="--dangerously-skip-permissions" ;;
-  Darwin) PERMS="--permission-mode acceptEdits" ;;
+  Darwin) PERMS="" ;;
   *)      PERMS="" ;;
 esac
 
