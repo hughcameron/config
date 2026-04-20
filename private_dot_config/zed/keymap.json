@@ -41,6 +41,12 @@
     }
   },
   {
+    "context": "Terminal",
+    "bindings": {
+      "cmd-n": "workspace::NewFile"
+    }
+  },
+  {
     "context": "Workspace",
     "unbind": {
       "cmd-shift-t": "pane::ReopenClosedItem"
