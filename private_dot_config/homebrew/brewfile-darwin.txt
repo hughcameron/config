@@ -35,7 +35,6 @@ brew "gh"
 brew "git-filter-repo"
 brew "glow"
 brew "go"
-brew "grip"
 brew "gonzo"
 brew "goreleaser"
 brew "hf"
@@ -59,6 +58,7 @@ brew "prettier"
 brew "pyright"
 brew "rclone"
 brew "resvg"
+brew "ripgrep"
 brew "rust"
 brew "rust-analyzer"
 brew "sd"
@@ -163,15 +163,12 @@ mas "iMovie", id: 408981434
 mas "Pixelmator Pro", id: 1289583905
 mas "Reeder", id: 6475002485
 mas "ShellFish", id: 1336634154
-mas "Tailscale", id: 1475387142
 mas "Things", id: 904280696
 mas "UTC Time", id: 1538245904
 mas "Xcode", id: 497799835
 
 # VSCode extensions
 vscode "darkriszty.markdown-table-prettify"
-vscode "mermaidchart.vscode-mermaid-chart"
-vscode "pomdtr.excalidraw-editor"
 
 # Cargo
 cargo "model2vec-rs"
