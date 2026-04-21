@@ -2,3 +2,7 @@
 # Mac -> Beelink access (managed by chezmoi)
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICmuv0jZQlsSOtm73JezAJG/4jZc5h6HsOKxiO3qrRdw hugh@beelink-agents
 {{- end }}
+{{- if eq .chezmoi.os "darwin" }}
+# iOS (ShellFish) -> MacBook access
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDXJ3UOru84egLfjuNHst1CiqRHJShS5c8xhIkn4jUG8oE1vDxxrUajfxUvZeMpMHpV8448GqMhYSNJ1076+GRb3VKB2xbYGx3CiSF/PMtONPCLL058Cq0H21fg6b1/BJ3EO7xbEIfg6aU8eqmc7+U+xVsqDTnl/eB0sFuaGZ4Clw7k3pl2d4IMdfsIV9s5fnXSNgf+Cp0bqZ/AA6MfImTvEZwh5lMhOvtsvdxpXI5W67NUW9oZwA+UG22NXx7Wt3XlhBByxCzkesjQp/Svy81xo6d6UQZonIsVz/nX6grLL4H+nuS3Cpl/xpQT3rrdBxW7E/tK5yuOJ8m+WLmYZbFRHGvBO0EPFLXydXH3gaZ6FUqZqVNqeKs3VFu4MUbQmTDtAyGZG9x1Ps60uOeeNv7JJ9zkyCfGrrm4sUeQjXohKHf6LA9GoPxjEh6kClmRIjM7YhPDYpkMldwx+5sTe6rtJzxI2+RGh8//h1zEzQ63xTv9FOK0lkvXTg+TWgX61EcaaGOFgqxo2dcP37lNCd2y0K36VbC8nILpXZUWL/FjSq1QKAYteX79DIOkoTbhv5H9zMdOhMDKwR3wEaGzThHCBzE5TjNcW/oJZzHSQ0PSi5vEWrmXRgIBJKQUslztAJ1a47R+zfpKHKrVet5GpqCCnn722c3y0G9qRNTaOg05kQ== ShellFish@Mac-24022026
+{{- end }}
