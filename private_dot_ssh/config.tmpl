@@ -6,6 +6,12 @@ Host beelink
     IdentityFile ~/.ssh/beelink_ed25519
     IdentitiesOnly yes
 
+# Beelink Mini PC (Tailscale — works from anywhere)
+Host beelink-ts
+    HostName 100.119.232.84
+    User hugh
+    IdentityFile ~/.ssh/beelink_ed25519
+    IdentitiesOnly yes
 {{ end -}}
 {{ if eq .chezmoi.os "linux" -}}
 # GitHub SSH authentication (for clone/push)

@@ -164,6 +164,7 @@ mas "iMovie", id: 408981434
 mas "Pixelmator Pro", id: 1289583905
 mas "Reeder", id: 6475002485
 mas "ShellFish", id: 1336634154
+mas "Tailscale", id: 1475387142
 mas "Things", id: 904280696
 mas "UTC Time", id: 1538245904
 mas "Xcode", id: 497799835
