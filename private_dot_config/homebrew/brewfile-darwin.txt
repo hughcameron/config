@@ -2,7 +2,6 @@
 tap "antoniorodr/memo"
 tap "hashicorp/tap"
 tap "hudochenkov/sshpass"
-tap "hypewell-ai/tap"
 tap "meridian-online/tap"
 tap "mutagen-io/mutagen"
 tap "oven-sh/bun"
