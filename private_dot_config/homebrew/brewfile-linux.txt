@@ -1,6 +1,7 @@
 # Linux taps
 tap "hashicorp/tap"
 tap "meridian-online/tap"
+tap "turbot/tap"
 
 # Linux CLI tools
 brew "aria2"
@@ -45,10 +46,12 @@ brew "wget"
 brew "yaml-language-server"
 brew "yazi"
 brew "youplot"
+brew "yq"
 brew "zoxide"
 brew "zsh-autocomplete"
 brew "hashicorp/tap/terraform"
 brew "meridian-online/tap/finetype"
+brew "turbot/tap/steampipe"
 
 # Linux casks
 cask "gcloud-cli"

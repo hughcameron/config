@@ -6,6 +6,7 @@ tap "meridian-online/tap"
 tap "mutagen-io/mutagen"
 tap "oven-sh/bun"
 tap "steipete/tap"
+tap "turbot/tap"
 tap "yakitrak/yakitrak"
 
 # macOS CLI tools
@@ -103,6 +104,7 @@ brew "meridian-online/tap/finetype"
 brew "mutagen-io/mutagen/mutagen"
 brew "oven-sh/bun/bun"
 brew "steipete/tap/remindctl"
+brew "turbot/tap/steampipe"
 brew "yakitrak/yakitrak/obsidian-cli"
 
 # macOS casks
