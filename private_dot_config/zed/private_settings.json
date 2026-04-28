@@ -7,6 +7,18 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "project_panel": {
+    "dock": "left"
+  },
+  "outline_panel": {
+    "dock": "left"
+  },
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "git_panel": {
+    "dock": "left"
+  },
   "vim_mode": true,
   "vim": {
     "use_system_clipboard": "always",
@@ -31,27 +43,43 @@
       "args": [],
       "projects": [
         {
-          "paths": ["/home/hugh"],
+          "paths": [
+            "/home/hugh"
+          ]
         },
         {
-          "paths": ["/home/hugh_cameron"],
-        },
-      ],
+          "paths": [
+            "/home/hugh_cameron"
+          ]
+        }
+      ]
     },
     {
       "host": "garden-patch.us-west1-b.sun-cloud-garden",
       "args": [],
-      "projects": [],
+      "projects": []
     },
     {
       "host": "beelink",
       "args": [],
       "projects": [
         {
-          "paths": ["/home/hugh/github/hughcameron/config/./"],
+          "paths": [
+            "/home/hugh/github/hughcameron/config/./"
+          ]
         },
-      ],
-    },
+        {
+          "paths": [
+            "/home/hugh/github/hughcameron/folklore"
+          ]
+        },
+        {
+          "paths": [
+            "/home/hugh/github/hughcameron/pygame-dev/./"
+          ]
+        }
+      ]
+    }
   ],
   "edit_predictions": {
     "mode": "subtle",
@@ -67,6 +95,7 @@
     "dark": "Warm Charmed Icons",
   },
   "agent": {
+    "dock": "right",
     "tool_permissions": {
       "default": "allow",
     },
