@@ -1,0 +1,73 @@
+% cleanup, disk-space
+
+# Inspect: see what's eating ~/.cache
+du -sh ~/.cache/* 2>/dev/null | sort -h
+
+# Inspect: interactive disk usage browser (gdu)
+gdu-go <path>
+
+# Inspect: top-level home dirs by size
+du -sh ~/* 2>/dev/null | sort -h | tail -20
+
+# brew: clean old versions of installed formulae
+brew cleanup
+
+# brew: clean everything, including latest versions of uninstalled
+brew cleanup --prune=all
+
+# brew: drop dependencies no formula requires anymore
+brew autoremove
+
+# uv: prune stale cache entries (safe)
+uv cache prune
+
+# uv: nuke entire uv cache (will re-download on next install)
+uv cache clean
+
+# npm: clear the global npm cache
+npm cache clean --force
+
+# cargo: remove old crate versions and caches (needs cargo-cache)
+cargo cache --autoclean
+
+# git: prune stale remote-tracking branches in current repo
+git fetch --prune
+
+# git: drop stale remote-tracking refs for a specific remote
+git remote prune <remote>
+
+# git: aggressive garbage collect on current repo
+git gc --aggressive --prune=now
+
+# docker: remove stopped containers, dangling images, unused networks
+docker system prune -f
+
+# docker: nuclear — also drops volumes and ALL unused images
+docker system prune -af --volumes
+
+# docker: clear buildx build cache (often the biggest hog)
+docker buildx prune -af
+
+# CDK: remove synth output (regenerates on next `cdk synth`/`cdk deploy`)
+rm -rf <cdk_dir>/cdk.out
+
+# apt (Linux): remove orphaned packages
+sudo apt autoremove --purge
+
+# apt (Linux): clear /var/cache/apt/archives
+sudo apt clean
+
+# journalctl (Linux): cap systemd journal size
+sudo journalctl --vacuum-size=<size>
+
+# journalctl (Linux): drop journal entries older than N days
+sudo journalctl --vacuum-time=<age>
+
+# macOS: delete unavailable iOS simulator runtimes
+xcrun simctl delete unavailable
+
+$ remote: git remote
+$ path: echo ~ /tmp / --- --multi false
+$ cdk_dir: pwd
+$ size: echo "200M 500M 1G 2G" | tr ' ' '\n'
+$ age: echo "7d 14d 30d 90d" | tr ' ' '\n'
