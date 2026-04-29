@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# finetype-dev — run the FineType CLI from the local working copy via cargo.
+#
+# Why: `finetype` (brew) is the stable installed binary. `finetype-dev`
+# always runs the latest source in ~/github/meridian-online/finetype, so
+# you can iterate on code without re-running `cargo install` and without
+# tripping over which version is active.
+#
+# Usage: identical to `finetype`. Args are passed through verbatim.
+#   finetype-dev profile -f data.csv -o json-schema > schema.json
+#   finetype-dev validate data.csv schema.json --db out.db --table foo
+#
+# First run after a code change recompiles (release profile); subsequent
+# runs are cached and near-instant.
+
+set -euo pipefail
+
+REPO="${FINETYPE_REPO:-$HOME/github/meridian-online/finetype}"
+MANIFEST="$REPO/crates/finetype-cli/Cargo.toml"
+
+if [[ ! -f "$MANIFEST" ]]; then
+  echo "finetype-dev: cannot find $MANIFEST" >&2
+  echo "  Set FINETYPE_REPO to override (current: $REPO)" >&2
+  exit 2
+fi
+
+exec cargo run --quiet --release --manifest-path "$MANIFEST" --bin finetype -- "$@"
