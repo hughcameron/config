@@ -10,10 +10,23 @@
 #   finetype-dev profile -f data.csv -o json-schema > schema.json
 #   finetype-dev validate data.csv schema.json --db out.db --table foo
 #
-# First run after a code change recompiles (release profile); subsequent
-# runs are cached and near-instant.
+# Build profile: dev (debug). The workspace's release profile uses
+# `lto = true` + `codegen-units = 1`, which makes every recompile a
+# multi-minute LTO relink and peaks RAM hard enough to OOM low-memory
+# Linux hosts (e.g. the Beelink). Dev profile is 5–10× faster to compile
+# and is the right default for iteration. For release-quality output use
+# the brewed `finetype` binary or `make build`.
+#
+# This wrapper is macOS-only by design — it's a developer convenience for
+# Hugh's Mac. On other hosts it exits cleanly with a pointer to `finetype`.
 
 set -euo pipefail
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "finetype-dev: macOS-only wrapper (host: $(uname -s))." >&2
+  echo "  On Linux, use the installed \`finetype\` binary instead." >&2
+  exit 2
+fi
 
 REPO="${FINETYPE_REPO:-$HOME/github/meridian-online/finetype}"
 MANIFEST="$REPO/crates/finetype-cli/Cargo.toml"
@@ -24,4 +37,4 @@ if [[ ! -f "$MANIFEST" ]]; then
   exit 2
 fi
 
-exec cargo run --quiet --release --manifest-path "$MANIFEST" --bin finetype -- "$@"
+exec cargo run --quiet --manifest-path "$MANIFEST" --bin finetype -- "$@"
