@@ -27,8 +27,11 @@ uv cache clean
 # npm: clear the global npm cache
 npm cache clean --force
 
-# cargo: remove old crate versions and caches (needs cargo-cache)
-cargo cache --autoclean
+# cargo: clean current project's target/ directory (often the biggest hog)
+cargo clean
+
+# cargo: remove old crate versions from global registry (auto-installs cargo-cache if needed)
+command -v cargo-cache >/dev/null || cargo install cargo-cache --locked; cargo cache --autoclean
 
 # git: prune stale remote-tracking branches in current repo
 git fetch --prune
