@@ -1,0 +1,66 @@
+# Global Mutagen configuration.
+# Tracked by chezmoi at ~/github/hughcameron/config.
+# Applied to new sync sessions automatically. To change ignores after a
+# session exists: edit, commit, then `mutagen sync terminate <name>` and
+# `mutagen sync create ...` — Mutagen has no in-place ignore edit.
+# See decision 0006 for context.
+
+sync:
+  defaults:
+    symlink:
+      mode: posix-raw
+    ignore:
+      paths:
+        # Large datasets / backups
+        - git-tables/
+        - nw-studio-backup/
+        - openclaw-backup/
+        - datasets/
+        - reference/
+
+        # Caches and language toolchains
+        - .cache/
+        - .cargo/
+        - .bun/
+        - .npm/
+        - .gsutil/
+        - .mutagen/
+        - go/
+
+        # ~/.local internals
+        - .local/share/chezmoi/
+        - .local/share/Trash/
+        - .local/share/uv/
+        - .local/lib/
+
+        # macOS noise
+        - ._*
+        - .DS_Store
+
+        # Claude Code state (per-host)
+        - .claude.json
+        - .claude.json.backup.*
+        - .claude.json.tmp.*
+        - .claude/debug/
+        - .claude/projects/
+        - .claude-mem/claude-mem.db-shm
+        - .claude-mem/claude-mem.db-wal
+        - .claude-mem/logs/
+
+        # Shell
+        - .zcompdump*
+
+        # Build artefacts
+        - node_modules/
+        - __pycache__/
+        - .venv/
+        - target/
+        - .bundle/
+
+        # Service logs
+        - .config/gcloud/logs/
+        - github/hughcameron/hydrofoil/logs/
+
+        # Git internals (let each side maintain its own index/reflog)
+        - "**/.git/index"
+        - "**/.git/logs/"
