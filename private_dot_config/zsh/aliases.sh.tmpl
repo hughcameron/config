@@ -14,20 +14,14 @@ alias gl='gh pr list'
 alias gs='gh pr merge --squash'
 alias gv='gh pr view'
 
-# Claude
-alias cc='claude'
+# Claude (launches a tmux session named after the current git repo)
+alias cc='claude-session'
 
 # Navi
 alias n='navi'
 
 # Pipeline
 alias pl='navi --query "pipeline" --best-match'
-
-# Claude Agent Invoke (each alias launches a tmux session via agent-session)
-alias ng='agent-session nightingale'
-alias mg='agent-session mcgill ~/github/hughcameron/hydrofoil'
-alias cs='agent-session carson'
-alias at='agent-session arthur'
 
 {{ if eq .chezmoi.os "darwin" -}}
 # Remote agent sessions

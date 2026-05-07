@@ -1,0 +1,29 @@
+#!/bin/bash
+# Launch Claude in a tmux session named after the current git repo.
+# Usage: claude-session [path]
+#
+# Session name resolves to the basename of the git repo root containing the
+# target path (falls back to basename of the path if not in a git repo).
+#
+# Permission mode:
+#   - config / ops repos → --permission-mode acceptEdits (system config and
+#     agent specs are harder to recover than code).
+#   - everything else    → --dangerously-skip-permissions.
+
+set -euo pipefail
+
+TARGET="${1:-$PWD}"
+TARGET="${TARGET/#\~/$HOME}"
+
+if ROOT="$(git -C "$TARGET" rev-parse --show-toplevel 2>/dev/null)"; then
+  TARGET="$ROOT"
+fi
+
+SESSION="$(basename "$TARGET")"
+
+case "$SESSION" in
+  config|ops) PERMS="--permission-mode acceptEdits" ;;
+  *)          PERMS="--dangerously-skip-permissions" ;;
+esac
+
+exec tmux new-session -A -s "$SESSION" -c "$TARGET" "claude $PERMS"
