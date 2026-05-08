@@ -9,7 +9,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>$HOME/.config/carson/housekeeping.sh</string>
+        <string>$HOME/.config/chores/housekeeping.sh</string>
     </array>
 
     <key>StartCalendarInterval</key>

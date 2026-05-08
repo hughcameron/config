@@ -1,11 +1,11 @@
 #!/bin/bash
-# Config Housekeeping — run daily by launchd, reviewed by Carson at session start
+# Config Housekeeping — run daily by launchd, reviewed at session start
 # Collects brew bundle state, chezmoi drift, and system config changes
-# Output: ~/.config/carson/housekeeping-report.txt
+# Output: ~/.config/chores/housekeeping-report.txt
 
 set -euo pipefail
 
-REPORT_DIR="$HOME/.config/carson"
+REPORT_DIR="$HOME/.config/chores"
 REPORT_FILE="$REPORT_DIR/housekeeping-report.txt"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
