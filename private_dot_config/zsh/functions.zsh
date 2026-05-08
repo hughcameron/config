@@ -186,3 +186,61 @@ decisions() {
         ${EDITOR:-nvim} "$file_path"
     fi
 }
+
+# YDF CLI (Linux only): install/update from latest v* GitHub release.
+# Layout: ~/.local/share/ydf/<version>/ with a 'current' symlink, and
+# prefixed shims (ydf-train, ydf-evaluate, ...) in ~/.local/bin.
+ydf-update() {
+    if [[ "$(uname -s)" != "Linux" ]]; then
+        echo "ydf-update: CLI binaries only ship for Linux."
+        return 1
+    fi
+
+    local repo="google/yggdrasil-decision-forests"
+    local share_dir="$HOME/.local/share/ydf"
+    local bin_dir="$HOME/.local/bin"
+
+    local latest
+    latest="$(gh release list --repo "$repo" --limit 30 \
+        --json tagName --jq '[.[] | select(.tagName | test("^v[0-9]"))][0].tagName')"
+    if [[ -z "$latest" ]]; then
+        echo "ydf-update: no v* CLI release found."
+        return 1
+    fi
+
+    local installed=""
+    [[ -L "$share_dir/current" ]] && installed="$(basename "$(readlink "$share_dir/current")")"
+    if [[ "$installed" == "$latest" && "$1" != "--force" ]]; then
+        echo "ydf-update: already on $latest (--force to reinstall)."
+        return 0
+    fi
+
+    local target_dir="$share_dir/$latest"
+    local tmp_zip; tmp_zip="$(mktemp -t ydf-XXXXXX.zip)"
+
+    echo "ydf-update: downloading $latest..."
+    if ! gh release download "$latest" --repo "$repo" \
+            --pattern 'cli_linux.zip' --output "$tmp_zip" --clobber; then
+        rm -f "$tmp_zip"
+        echo "ydf-update: download failed."
+        return 1
+    fi
+
+    mkdir -p "$target_dir"
+    unzip -q -o "$tmp_zip" -d "$target_dir"
+    rm -f "$tmp_zip"
+    chmod +x "$target_dir"/*(.N)
+
+    ln -sfn "$target_dir" "$share_dir/current"
+
+    mkdir -p "$bin_dir"
+    for old in "$bin_dir"/ydf-*(N@); do
+        [[ "$(readlink "$old")" == "$share_dir/"* ]] && rm -f "$old"
+    done
+    for bin in "$target_dir"/*(.N); do
+        ln -sfn "$share_dir/current/${bin:t}" "$bin_dir/ydf-${bin:t}"
+    done
+
+    echo "ydf-update: installed $latest -> $target_dir"
+    print -l "$target_dir"/*(.N:t) | sed 's/^/  ydf-/'
+}
