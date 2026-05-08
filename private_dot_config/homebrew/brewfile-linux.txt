@@ -33,6 +33,7 @@ brew "lazygit"
 brew "marksman"
 brew "navi"
 brew "openjdk@17", link: true
+brew "pre-commit"
 brew "prettier"
 brew "pyright"
 brew "resvg"
