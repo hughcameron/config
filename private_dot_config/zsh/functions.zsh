@@ -244,3 +244,9 @@ ydf-update() {
     echo "ydf-update: installed $latest -> $target_dir"
     print -l "$target_dir"/*(.N:t) | sed 's/^/  ydf-/'
 }
+
+# List every callable name in the current shell: external commands,
+# aliases, functions, and builtins (sorted, deduped across categories).
+lscmd() {
+    print -rl -- ${(ko)commands} ${(ko)aliases} ${(ko)functions} ${(ko)builtins} | sort -u
+}
