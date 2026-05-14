@@ -250,3 +250,16 @@ ydf-update() {
 lscmd() {
     print -rl -- ${(ko)commands} ${(ko)aliases} ${(ko)functions} ${(ko)builtins} | sort -u
 }
+
+# Copy stdin to the system clipboard. Uses pbcopy on macOS; on Linux emits an
+# OSC 52 escape sequence so the *local* terminal (via SSH + tmux passthrough)
+# receives the data — tmux.conf has set-clipboard on + allow-passthrough on.
+c() {
+    if (( $+commands[pbcopy] )); then
+        pbcopy
+        return
+    fi
+    local data
+    data="$(base64 | tr -d '\n')"
+    printf '\033]52;c;%s\a' "$data" > /dev/tty
+}

@@ -65,3 +65,20 @@ _decisions_widget() {
 }
 zle -N _decisions_widget
 bindkey '^b' _decisions_widget
+
+# Ctrl+P: Copy last command's stdout to clipboard (re-runs the command).
+# Relies on the `c` function (defined in functions.zsh) for cross-platform
+# clipboard routing: pbcopy on macOS, OSC 52 on Linux.
+_copy_last_widget() {
+    local last
+    last="$(fc -ln -1)"
+    if [[ -z "$last" ]]; then
+        zle -M "copy-last: no previous command"
+        return
+    fi
+    eval "$last" | c
+    zle -M "copy-last: copied stdout of \`${last}\`"
+    zle reset-prompt
+}
+zle -N _copy_last_widget
+bindkey '^p' _copy_last_widget
