@@ -3,6 +3,16 @@
 # Disable XON/XOFF flow control so Ctrl+S reaches applications (e.g. nvim)
 stty -ixon
 
+# Up arrow: fzf history search (overrides zsh-autocomplete's menu).
+# zsh-autocomplete re-applies its bindings on every prompt via precmd, so
+# the override has to live in a precmd hook to survive.
+autoload -Uz add-zsh-hook
+_bind_up_to_fzf_history() {
+    bindkey -M emacs '^[[A' fzf-history-widget
+    bindkey -M emacs '^[OA' fzf-history-widget
+}
+add-zsh-hook precmd _bind_up_to_fzf_history
+
 # Ctrl+Y: Yazi with CWD tracking and prompt refresh
 _yazi_widget() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
@@ -15,9 +25,9 @@ _yazi_widget() {
 zle -N _yazi_widget
 bindkey '^y' _yazi_widget
 
-# Ctrl+K: Neovim editor
+# Ctrl+K: Neovim editor (LazyVim)
 _nvim_widget() {
-    command nvim
+    NVIM_APPNAME=nvim-lazyvim command nvim
     zle reset-prompt
 }
 zle -N _nvim_widget
