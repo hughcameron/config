@@ -25,9 +25,9 @@ _yazi_widget() {
 zle -N _yazi_widget
 bindkey '^y' _yazi_widget
 
-# Ctrl+K: Neovim editor (LazyVim)
+# Ctrl+K: Neovim editor
 _nvim_widget() {
-    NVIM_APPNAME=nvim-lazyvim command nvim
+    command nvim
     zle reset-prompt
 }
 zle -N _nvim_widget
