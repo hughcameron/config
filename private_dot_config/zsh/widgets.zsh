@@ -3,10 +3,24 @@
 # Disable XON/XOFF flow control so Ctrl+S reaches applications (e.g. nvim)
 stty -ixon
 
+autoload -Uz add-zsh-hook
+
+# Tab title: emit OSC 7 (current working directory) so the terminal can update
+# the tab name as we cd around. Ghostty injects this locally via its shell
+# integration, but that integration doesn't reach SSH'd remote shells — the
+# escape sequence emitted here passes back through SSH so the local tab
+# updates while we're on a remote host.
+_set_term_cwd() {
+    local host="${HOST:-${HOSTNAME:-$(hostname -s 2>/dev/null)}}"
+    local path="${PWD// /%20}"
+    printf '\e]7;file://%s%s\e\\' "$host" "$path"
+}
+add-zsh-hook chpwd _set_term_cwd
+_set_term_cwd
+
 # Up arrow: fzf history search (overrides zsh-autocomplete's menu).
 # zsh-autocomplete re-applies its bindings on every prompt via precmd, so
 # the override has to live in a precmd hook to survive.
-autoload -Uz add-zsh-hook
 _bind_up_to_fzf_history() {
     bindkey -M emacs '^[[A' fzf-history-widget
     bindkey -M emacs '^[OA' fzf-history-widget
