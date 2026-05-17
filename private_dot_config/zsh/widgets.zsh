@@ -5,17 +5,21 @@ stty -ixon
 
 autoload -Uz add-zsh-hook
 
-# Tab title: emit OSC 7 (current working directory) so the terminal can update
-# the tab name as we cd around. Ghostty injects this locally via its shell
-# integration, but that integration doesn't reach SSH'd remote shells — the
-# escape sequence emitted here passes back through SSH so the local tab
-# updates while we're on a remote host.
+# Tab title: emit OSC 7 (cwd) and, when SSH'd, OSC 2 (explicit title).
+# Ghostty's local shell integration already sets OSC 2 on every prompt, and
+# that explicit title overrides OSC 7 in the tab — so over SSH we need to
+# emit OSC 2 ourselves to break out of the stale local title. Locally we
+# only emit OSC 7 to leave Ghostty's own integration in charge of the title.
 _set_term_cwd() {
     local host="${HOST:-${HOSTNAME:-$(hostname -s 2>/dev/null)}}"
     local path="${PWD// /%20}"
     printf '\e]7;file://%s%s\e\\' "$host" "$path"
+    if [[ -n "$SSH_CONNECTION" ]]; then
+        printf '\e]2;%s:%s\e\\' "${host%%.*}" "${PWD/#$HOME/~}"
+    fi
 }
 add-zsh-hook chpwd _set_term_cwd
+add-zsh-hook precmd _set_term_cwd
 _set_term_cwd
 
 # Up arrow: fzf history search (overrides zsh-autocomplete's menu).
