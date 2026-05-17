@@ -2,6 +2,8 @@
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 -- Add any additional options here
 
+vim.g.lazyvim_python_lsp = "ty"
+
 -- Over SSH, force nvim's built-in OSC 52 provider. Auto-detection
 -- prefers tmux but doesn't reliably wire up at runtime under LazyVim's
 -- lazy clipboard restore. OSC 52 writes escape sequences direct to
