@@ -10,6 +10,50 @@ y() {
     rm -f -- "$tmp"
 }
 
+# Launch a 4-window tmux workspace (claude / nvim / lazygit / yazi) in a directory.
+# Usage: work [dir]   — defaults to $PWD. Session name = directory basename.
+# Reattaches if a session with that name already exists; each window drops to a
+# shell when its tool exits.
+work() {
+    local dir="${1:-$PWD}"
+    dir="${dir:A}"
+    if [[ ! -d "$dir" ]]; then
+        print -u2 "work: not a directory: $dir"
+        return 1
+    fi
+    local name="${dir:t}"
+    local shell="${SHELL:-/bin/zsh}"
+    local claude_perms="--dangerously-skip-permissions"
+    [[ "$(uname -s)" == "Darwin" ]] && claude_perms="--permission-mode auto"
+
+    if ! tmux has-session -t="$name" 2>/dev/null; then
+        tmux new-session -d -s "$name" -c "$dir" -n claude  "claude $claude_perms; exec $shell"
+        tmux new-window  -t "$name:" -c "$dir" -n nvim     "nvim; exec $shell"
+        tmux new-window  -t "$name:" -c "$dir" -n lazygit  "lazygit; exec $shell"
+        tmux new-window  -t "$name:" -c "$dir" -n yazi     "yazi; exec $shell"
+    fi
+    tmux select-window -t "$name:claude" 2>/dev/null
+
+    if [[ -n "$TMUX" ]]; then
+        tmux switch-client -t "$name"
+    else
+        tmux attach -t "$name"
+    fi
+}
+
+# fzf picker for tmux sessions: switch (inside tmux) or attach (outside).
+ta() {
+    local session
+    session=$(tmux list-sessions -F '#{session_name}' 2>/dev/null \
+        | fzf --prompt='tmux > ' --height=40% --reverse --no-multi) || return
+    [[ -z "$session" ]] && return
+    if [[ -n "$TMUX" ]]; then
+        tmux switch-client -t "$session"
+    else
+        tmux attach -t "$session"
+    fi
+}
+
 # Smart GitHub clone with shorthand support (owner/repo)
 clone() {
     local url="$1"
