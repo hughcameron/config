@@ -6,6 +6,10 @@ return {
         explorer = {
           hidden = true,
         },
+        files = {
+          hidden = true,
+          exclude = { ".git" },
+        },
       },
     },
   },
