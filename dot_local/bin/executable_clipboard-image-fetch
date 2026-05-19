@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Save the Mac's clipboard image to <output-path>.
+# Local Mac: uses pngpaste directly.
+# Elsewhere: SSH back to the Mac and pipe pngpaste output.
+
+set -e
+
+out="${1:?usage: clipboard-image-fetch <output-path>}"
+
+if command -v pngpaste >/dev/null 2>&1; then
+    pngpaste "$out"
+else
+    ssh -o ConnectTimeout=3 mac 'pngpaste -' > "$out"
+fi
+
+[ -s "$out" ] || { rm -f "$out"; exit 1; }

@@ -13,4 +13,11 @@ Host github.com
     IdentityFile ~/.ssh/github_vm_access
     IdentitiesOnly yes
     StrictHostKeyChecking accept-new
+
+# MacBook Pro (LAN) — reverse access for clipboard bridge
+Host mac
+    HostName 192.168.1.155
+    User hugh
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new
 {{ end -}}

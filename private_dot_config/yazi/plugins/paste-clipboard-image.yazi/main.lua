@@ -21,7 +21,7 @@ local function entry()
 
 	local path = cwd .. "/" .. name
 
-	local status, err = Command("pngpaste")
+	local status, err = Command("clipboard-image-fetch")
 		:arg(path)
 		:stderr(Command.PIPED)
 		:status()
