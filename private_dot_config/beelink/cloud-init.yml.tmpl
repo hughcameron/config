@@ -1,6 +1,5 @@
 #cloud-config
-# Beelink Mini PC provisioning for Claude Code agents
-# Agents: nightingale, mcgill
+# Beelink Mini PC provisioning for Claude Code sessions.
 # Also runs Homebridge for smart home automation.
 #
 # Usage: Flash Ubuntu Server 24.04 USB with this as user-data
@@ -122,7 +121,7 @@ runcmd:
   # Ghostty terminfo (fixes Delete key over SSH from Ghostty terminal)
   - tic -x /tmp/xterm-ghostty.terminfo
 
-  # Create repo directories for agents
+  # Create repo directories
   - su - hugh -c 'mkdir -p ~/github/{{ .projects.nightingale.repo_path }}'
   - su - hugh -c 'mkdir -p ~/github/hughcameron'
 
