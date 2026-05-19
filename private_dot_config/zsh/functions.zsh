@@ -11,14 +11,14 @@ y() {
 }
 
 # Launch a 4-window tmux workspace (claude / nvim / lazygit / yazi) in a directory.
-# Usage: work [dir]   — defaults to $PWD. Session name = directory basename.
+# Usage: lab [dir]   — defaults to $PWD. Session name = directory basename.
 # Reattaches if a session with that name already exists; each window drops to a
 # shell when its tool exits.
-work() {
+lab() {
     local dir="${1:-$PWD}"
     dir="${dir:A}"
     if [[ ! -d "$dir" ]]; then
-        print -u2 "work: not a directory: $dir"
+        print -u2 "lab: not a directory: $dir"
         return 1
     fi
     local name="${dir:t}"
