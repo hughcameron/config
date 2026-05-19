@@ -13,3 +13,7 @@ Hugh's chezmoi source repo — canonical home for dotfiles, shell config, settin
 - **Destructive operations.** Verify rollback path before running. System config is harder to recover than code.
 - **New credentials.** Start with minimum access; expand only if required.
 - **New automation.** Logs what it did, where, with timestamps.
+
+## Cross-machine notes
+
+- **Clipboard image bridge (Yazi `Ci`).** `dot_local/bin/executable_clipboard-image-fetch` is the wrapper Yazi calls. On Mac it shells out to `pngpaste`; elsewhere it `ssh mac 'pngpaste -'` and pipes bytes back. The `Host mac` SSH stanza (in `private_dot_ssh/config.tmpl`, linux branch) uses the Tailscale MagicDNS name `hughs-macbook-pro` — so it survives LAN reconnects but **requires both ends on the tailnet**. If paste suddenly fails on the Beelink: check `tailscale status` first, then `~/.ssh/config` Host mac.

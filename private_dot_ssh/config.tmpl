@@ -14,9 +14,11 @@ Host github.com
     IdentitiesOnly yes
     StrictHostKeyChecking accept-new
 
-# MacBook Pro (LAN) — reverse access for clipboard bridge
+# MacBook Pro — reverse access for clipboard bridge.
+# Uses Tailscale MagicDNS so the hostname stays stable across LAN reconnects.
+# Requires both ends authenticated to the same tailnet.
 Host mac
-    HostName 192.168.1.155
+    HostName hughs-macbook-pro
     User hugh
     IdentitiesOnly yes
     StrictHostKeyChecking accept-new

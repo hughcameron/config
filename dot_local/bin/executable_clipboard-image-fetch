@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Save the Mac's clipboard image to <output-path>.
 # Local Mac: uses pngpaste directly.
-# Elsewhere: SSH back to the Mac and pipe pngpaste output.
+# Elsewhere: SSH back to the Mac (`Host mac` → Tailscale) and pipe pngpaste.
+# If SSH fails, the `Host mac` stanza in ~/.ssh/config is the place to check
+# (source of truth: private_dot_ssh/config.tmpl in the chezmoi repo).
 
 set -e
 
@@ -10,7 +12,12 @@ out="${1:?usage: clipboard-image-fetch <output-path>}"
 if command -v pngpaste >/dev/null 2>&1; then
     pngpaste "$out"
 else
-    ssh -o ConnectTimeout=3 mac 'pngpaste -' > "$out"
+    if ! ssh -o ConnectTimeout=3 -o BatchMode=yes mac 'pngpaste -' > "$out" 2>/tmp/clipboard-image-fetch.err; then
+        echo "clipboard-image-fetch: ssh mac failed — check tailnet status and ~/.ssh/config Host mac" >&2
+        sed 's/^/  /' /tmp/clipboard-image-fetch.err >&2
+        rm -f "$out"
+        exit 1
+    fi
 fi
 
 [ -s "$out" ] || { rm -f "$out"; exit 1; }
