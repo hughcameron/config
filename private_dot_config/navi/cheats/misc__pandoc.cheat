@@ -1,0 +1,41 @@
+% pandoc, typst, markdown, pdf
+
+# Install pandoc and typst (Mac)
+brew install pandoc typst
+
+# Install pandoc and typst (Linux apt)
+sudo apt install -y pandoc && cargo install --locked typst-cli
+
+# Convert markdown to PDF (typst engine, quickest path)
+pandoc "<md>" -o "<pdf>" --pdf-engine=typst
+
+# Convert with tight margins
+pandoc "<md>" -o "<pdf>" --pdf-engine=typst -V margin-left=0.6in -V margin-right=0.6in -V margin-top=0.5in -V margin-bottom=0.5in -V fontsize=10pt
+
+# Convert with custom main font (must be installed; see "typst fonts")
+pandoc "<md>" -o "<pdf>" --pdf-engine=typst -V mainfont="<font>" -V fontsize=11pt
+
+# Convert with paper size
+pandoc "<md>" -o "<pdf>" --pdf-engine=typst -V papersize=<paper>
+
+# Add table of contents and number sections
+pandoc "<md>" -o "<pdf>" --pdf-engine=typst --toc --number-sections
+
+# Convert markdown to a .typ file for hand-tweaking
+pandoc "<md>" -o "<typ_out>" -t typst
+
+# Render a .typ file directly to PDF
+typst compile "<typ>" "<pdf>"
+
+# Watch a .typ file and recompile on save
+typst watch "<typ>"
+
+# List fonts available to typst
+typst fonts
+
+$ md: find . -maxdepth 3 -name "*.md" 2>/dev/null
+$ pdf: echo "out.pdf"
+$ typ: find . -maxdepth 3 -name "*.typ" 2>/dev/null
+$ typ_out: echo "out.typ"
+$ font: typst fonts 2>/dev/null | sort -u
+$ paper: echo -e "a4\nletter\nlegal\na5"
