@@ -71,3 +71,12 @@ clipboard-read = allow
 # Fix yazi horizontal line artifact in preview pane
 # Adjusts box-drawing character thickness to prevent rendering issues
 adjust-box-thickness = -10%
+
+# Split resize: defaults (cmd+ctrl+arrows) collide with macOS Mission Control
+# Space-switching shortcuts. Mirror the focus bindings (cmd+alt+arrows) with
+# an added shift for resize, and cmd+alt+shift+0 to equalize.
+keybind = cmd+alt+shift+left=resize_split:left,25
+keybind = cmd+alt+shift+right=resize_split:right,25
+keybind = cmd+alt+shift+up=resize_split:up,25
+keybind = cmd+alt+shift+down=resize_split:down,25
+keybind = cmd+alt+shift+0=equalize_splits
