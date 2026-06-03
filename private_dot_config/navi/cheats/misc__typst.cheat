@@ -1,0 +1,33 @@
+% typst, markdown, pdf
+
+# Install typst (Mac)
+brew install typst
+
+# Install typst (Linux)
+cargo install --locked typst-cli
+
+# Render a .typ file to PDF
+typst compile "<typ>" "<pdf>"
+
+# Watch a .typ file and recompile on save
+typst watch "<typ>"
+
+# List fonts available to typst
+typst fonts
+
+# Scaffold a typst wrapper that renders a markdown file via cmarker (bump version as needed)
+cat > main.typ <<'EOF'
+#import "@preview/cmarker:0.1.6": render
+
+#set page(margin: 0.6in)
+#set text(size: 10pt)
+
+#render(read("<md>"))
+EOF
+
+# Compile the cmarker wrapper to PDF
+typst compile main.typ "<pdf>"
+
+$ md: find . -maxdepth 3 -name "*.md" 2>/dev/null
+$ pdf: echo "out.pdf"
+$ typ: find . -maxdepth 3 -name "*.typ" 2>/dev/null
