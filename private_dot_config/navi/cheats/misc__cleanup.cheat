@@ -72,6 +72,12 @@ sudo journalctl --vacuum-time=<age>
 # macOS: delete unavailable iOS simulator runtimes
 xcrun simctl delete unavailable
 
+# macOS: reset Claude Desktop sandbox VM (keeps seed; rehydrates from rootfs.img.zst on next launch)
+osascript -e 'quit app "Claude"' && rm -f ~/Library/Application\ Support/Claude/vm_bundles/claudevm.bundle/rootfs.img ~/Library/Application\ Support/Claude/vm_bundles/claudevm.bundle/sessiondata.img
+
+# macOS: nuke Claude Desktop sandbox VM entirely (re-downloads seed on next computer-use launch)
+osascript -e 'quit app "Claude"' && rm -rf ~/Library/Application\ Support/Claude/vm_bundles
+
 $ remote: git remote
 $ path: echo ~ /tmp / --- --multi false
 $ cdk_dir: pwd
