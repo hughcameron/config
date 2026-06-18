@@ -1,5 +1,8 @@
 % duckdb, db
 
+# Install DuckDB
+V="<version>"; [ "$V" = latest ] && V=""; curl https://install.duckdb.org | DUCKDB_VERSION="$V" sh
+
 # Run in DuckDB
 duckdb -f <file>
 
@@ -10,3 +13,4 @@ duckdb -json -f <file> | vd -f json
 duckdb -json -f <file> | jless
 
 $ file: ls | grep sql
+$ version: (echo latest; curl -s https://api.github.com/repos/duckdb/duckdb/releases | jq -r '.[].tag_name' | sed 's/^v//' | sort -Vr) --- --column 1
