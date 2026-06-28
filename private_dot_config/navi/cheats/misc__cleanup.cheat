@@ -9,6 +9,9 @@ gdu-go <path>
 # Inspect: top-level home dirs by size
 du -sh ~/* 2>/dev/null | sort -h | tail -20
 
+# Inspect: folders in the current dir ranked by size (largest last)
+du -sh ./*/ 2>/dev/null | sort -h
+
 # Inspect: heavy build/cache dirs (node_modules, target, .venv, __pycache__) ranked by size
 find <path> -type d \( -name node_modules -o -name target -o -name .venv -o -name venv -o -name __pycache__ \) -prune -exec du -sh {} + 2>/dev/null | sort -hr | head -20
 
