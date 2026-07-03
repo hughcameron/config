@@ -289,6 +289,89 @@ ydf-update() {
     print -l "$target_dir"/*(.N:t) | sed 's/^/  ydf-/'
 }
 
+# Duckle (visual ETL/ELT studio): install/update from latest GitHub release.
+# Single self-contained binary per platform. Layout mirrors ydf-update:
+# ~/.local/share/duckle/<version>/duckle with a 'current' symlink, and a
+# 'duckle' shim in ~/.local/bin. Verifies the SHA256SUMS.txt checksum.
+duckle-update() {
+    local repo="slothflowlabs/duckle"
+    local share_dir="$HOME/.local/share/duckle"
+    local bin_dir="$HOME/.local/bin"
+
+    # Map uname -> release asset (Duckle-<os>-<arch>).
+    local os arch
+    case "$(uname -s)" in
+        Darwin) os="macos" ;;
+        Linux)  os="linux" ;;
+        *) echo "duckle-update: unsupported OS $(uname -s)."; return 1 ;;
+    esac
+    case "$(uname -m)" in
+        arm64|aarch64) arch="arm64" ;;
+        x86_64|amd64)  arch="x64" ;;
+        *) echo "duckle-update: unsupported arch $(uname -m)."; return 1 ;;
+    esac
+    local asset="Duckle-${os}-${arch}"
+
+    local latest
+    latest="$(gh release list --repo "$repo" --limit 30 \
+        --json tagName --jq '[.[] | select(.tagName | test("^v[0-9]"))][0].tagName')"
+    if [[ -z "$latest" ]]; then
+        echo "duckle-update: no v* release found."
+        return 1
+    fi
+
+    local installed=""
+    [[ -L "$share_dir/current" ]] && installed="$(basename "$(readlink "$share_dir/current")")"
+    if [[ "$installed" == "$latest" && "$1" != "--force" ]]; then
+        echo "duckle-update: already on $latest (--force to reinstall)."
+        return 0
+    fi
+
+    local target_dir="$share_dir/$latest"
+    local tmp_dir; tmp_dir="$(mktemp -d -t duckle-XXXXXX)"
+
+    echo "duckle-update: downloading $latest ($asset)..."
+    if ! gh release download "$latest" --repo "$repo" \
+            --pattern "$asset" --pattern 'SHA256SUMS.txt' \
+            --dir "$tmp_dir" --clobber; then
+        rm -rf "$tmp_dir"
+        echo "duckle-update: download failed."
+        return 1
+    fi
+
+    echo "duckle-update: verifying checksum..."
+    local sha_cmd
+    if (( $+commands[sha256sum] )); then
+        sha_cmd="sha256sum"
+    elif (( $+commands[shasum] )); then
+        sha_cmd="shasum -a 256"
+    fi
+    if [[ -n "$sha_cmd" ]]; then
+        local want got
+        want="$(grep " $asset\$" "$tmp_dir/SHA256SUMS.txt" | awk '{print $1}')"
+        got="$(cd "$tmp_dir" && eval "$sha_cmd $asset" | awk '{print $1}')"
+        if [[ -z "$want" || "$want" != "$got" ]]; then
+            rm -rf "$tmp_dir"
+            echo "duckle-update: checksum mismatch (want ${want:-none}, got $got)."
+            return 1
+        fi
+    else
+        echo "duckle-update: no sha256 tool found, skipping verification."
+    fi
+
+    mkdir -p "$target_dir"
+    mv "$tmp_dir/$asset" "$target_dir/duckle"
+    chmod +x "$target_dir/duckle"
+    rm -rf "$tmp_dir"
+
+    ln -sfn "$target_dir" "$share_dir/current"
+
+    mkdir -p "$bin_dir"
+    ln -sfn "$share_dir/current/duckle" "$bin_dir/duckle"
+
+    echo "duckle-update: installed $latest -> $target_dir/duckle"
+}
+
 # List every callable name in the current shell: external commands,
 # aliases, functions, and builtins (sorted, deduped across categories).
 lscmd() {
