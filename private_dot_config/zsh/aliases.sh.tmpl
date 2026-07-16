@@ -46,8 +46,9 @@ alias em='msgvault'
 
 # Nushell analysis scripts (kept as nu invocations)
 alias bt='nu ~/.config/nushell/analysis/brewtrend/brewtrend.nu'
-alias ccu='nu ~/.config/nushell/analysis/claude-usage/claude-usage.nu'
 alias gcpvm='nu ~/.config/nushell/scripts/gcpvm.nu'
+# Claude usage analytics (ported to bash — no nushell dependency)
+alias ccu='bash ~/.config/nushell/analysis/claude-usage/claude-usage.sh'
 
 # DuckDB via navi
 alias dx='navi --query "duckdb -f <file>" --best-match'
