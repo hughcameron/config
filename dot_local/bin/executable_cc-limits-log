@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# cc-limits-log — sample Claude Code's usage limits from the statusline hook.
+#
+# Claude Code passes a JSON blob to the statusline command on every render,
+# including `.rate_limits.seven_day.used_percentage` — the authoritative "% of
+# your weekly usage limit". That value is otherwise discarded after display.
+# This script appends it to an append-only log so `ccu pace week` can plot a
+# weekly burndown against the real limit.
+#
+# Invoked (backgrounded) from ~/.claude/statusline-command.sh with the hook
+# JSON on stdin. Deduped so frequent renders don't bloat the log: appends at
+# most once per MIN_INTERVAL seconds, or whenever the 7-day % changes.
+set -euo pipefail
+
+MIN_INTERVAL=120
+data_dir="${HOME}/.config/nushell/analysis/claude-usage/data"
+log="${data_dir}/limits-log.jsonl"
+stamp="${data_dir}/.limits-log.last"
+
+input="$(cat)"
+
+# Bail quietly if this render carries no weekly-limit reading (e.g. early in a
+# session before rate-limit data is attached).
+seven_day="$(printf '%s' "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty' 2>/dev/null || true)"
+[ -z "$seven_day" ] && exit 0
+
+now="$(date +%s)"
+last_ts=0
+last_val=""
+if [ -f "$stamp" ]; then
+  IFS=' ' read -r last_ts last_val < "$stamp" || true
+fi
+[[ "$last_ts" =~ ^[0-9]+$ ]] || last_ts=0
+
+# Dedup: skip if within MIN_INTERVAL and the 7-day % is unchanged.
+if [ $((now - last_ts)) -lt "$MIN_INTERVAL" ] && [ "$seven_day" = "$last_val" ]; then
+  exit 0
+fi
+
+mkdir -p "$data_dir"
+
+# Compact JSON line: the fields `ccu pace week` reads, plus the raw rate_limits
+# block for forensics / future sub-limits (Opus weekly cap, reset timestamps).
+printf '%s' "$input" | jq -c \
+  --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  '{
+     ts: $ts,
+     five_hour: (.rate_limits.five_hour.used_percentage // null),
+     seven_day: (.rate_limits.seven_day.used_percentage // null),
+     resets_at: (.rate_limits.seven_day.resets_at // null),
+     cost_usd: (.cost.total_cost_usd // null),
+     session_id: (.session_id // null),
+     rate_limits: (.rate_limits // null)
+   }' >> "$log"
+
+printf '%s %s\n' "$now" "$seven_day" > "$stamp"
