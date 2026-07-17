@@ -16,6 +16,11 @@ PRICING_CSV="${DATA_DIR}/pricing.csv"
 PRICING_URL="https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"
 PRICING_CACHE_HOURS=24
 LIMITS_LOG="${DATA_DIR}/limits-log.jsonl"
+# Authoritative usage meters from /api/oauth/usage (see ~/.local/bin/cc-usage-fetch).
+USAGE_API_CACHE="${DATA_DIR}/usage-api.json"
+USAGE_HISTORY="${DATA_DIR}/usage-log.jsonl"
+USAGE_FETCH="${HOME}/.local/bin/cc-usage-fetch"
+USAGE_CACHE_TTL=1200   # 20 min — the endpoint is heavily rate-limited
 
 # --- Small utilities ---
 reverse_lines() { awk '{a[NR]=$0} END{for(i=NR;i>=1;i--) print a[i]}'; }
@@ -45,13 +50,31 @@ d_prev_month_last()   { date -v1d -v-1d +%Y%m%d 2>/dev/null || date -d "$(date +
 d_days_ago()          { date -v-"$1"d +%Y%m%d 2>/dev/null || date -d "$1 days ago" +%Y%m%d; }
 d_month_year()        { date +'%B %Y'; }
 
-iso_to_epoch() {  # ISO8601 (…Z) -> epoch seconds
-  local ts="$1" e
-  e=$(date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "$ts" +%s 2>/dev/null) && { printf '%s' "$e"; return; }
-  e=$(date -u -d "$ts" +%s 2>/dev/null) && { printf '%s' "$e"; return; }
-  return 1
+# Convert a timestamp to epoch seconds. Accepts a Unix epoch int (status-line
+# resets_at), an ISO8601 …Z (our log ts), or ISO with fractional secs + offset
+# (the API resets_at). All treated as UTC.
+any_to_epoch() {
+  local v="$1" s e
+  case "$v" in
+    ''|null) return 1;;
+    *[!0-9]*)  # non-digits -> ISO; strip fractional secs and any trailing offset/Z
+      s="$(printf '%s' "$v" | sed -E 's/\.[0-9]+//; s/([+-][0-9]{2}):?[0-9]{2}$//; s/Z$//')"
+      e=$(date -j -u -f '%Y-%m-%dT%H:%M:%S' "$s" +%s 2>/dev/null) && { printf '%s' "$e"; return; }
+      e=$(date -u -d "$v" +%s 2>/dev/null) && { printf '%s' "$e"; return; }
+      return 1;;
+    *) printf '%s' "$v";;  # already an epoch
+  esac
 }
 epoch_to_disp() { date -r "$1" +'%a %d %b %H:%M' 2>/dev/null || date -d "@$1" +'%a %d %b %H:%M'; }
+# Humanize a positive second-count as "1h 41m" / "41m" / "12h".
+fmt_reltime() {
+  local s="$1" h m
+  [ "$s" -lt 0 ] && s=0
+  h=$(( s / 3600 )); m=$(( (s % 3600) / 60 ))
+  if [ "$h" -gt 0 ] && [ "$m" -gt 0 ]; then printf '%dh %dm' "$h" "$m"
+  elif [ "$h" -gt 0 ]; then printf '%dh' "$h"
+  else printf '%dm' "$m"; fi
+}
 
 # --- Pricing (dynamic, from the LiteLLM feed) ---
 pricing_cache_valid() {
@@ -308,77 +331,146 @@ pace_week_proxy() {  # $1 = ceiling (optional)
   printf '  last 7 days $%.2f  ·  reference ceiling $%.2f\n' "$total" "$reference"
 }
 
-cmd_pace_week() {
-  if has_flag --proxy "$@"; then pace_week_proxy "$(get_flag_val --ceiling "$@")"; return; fi
-
-  local wk n
-  if [ -f "$LIMITS_LOG" ]; then
-    wk="$(jq -c 'select(.seven_day != null)' "$LIMITS_LOG" 2>/dev/null | jq -s 'sort_by(.ts)')"
-  else
-    wk="[]"
+# Current authoritative usage snapshot from /api/oauth/usage: prefer a fresh
+# cache, else best-effort fetch (which no-ops on the endpoint's frequent 429),
+# else the last good cache. Empty when the API has never succeeded.
+usage_snapshot() {
+  local now; now="$(date +%s)"
+  if [ -f "$USAGE_API_CACHE" ]; then
+    local age
+    age=$(( now - $(stat -f %m "$USAGE_API_CACHE" 2>/dev/null || stat -c %Y "$USAGE_API_CACHE" 2>/dev/null || echo 0) ))
+    [ "$age" -lt "$USAGE_CACHE_TTL" ] && { cat "$USAGE_API_CACHE"; return 0; }
   fi
-  n="$(jq 'length' <<<"$wk")"
-  if [ "$n" -lt 2 ]; then
-    echo "Weekly-limit history is still building — ${n} sample(s) logged so far."
-    echo "The statusline records the real 7-day usage % as you work with Claude Code."
-    echo "For a view you can use right now:  ccu pace week --proxy"
+  # Throttle fetch *attempts* to once per TTL: the endpoint 429s, and each try
+  # touches the Keychain — don't do that on every command.
+  local stamp="${DATA_DIR}/.usage-fetch.attempt" last=0
+  [ -f "$stamp" ] && last="$(stat -f %m "$stamp" 2>/dev/null || stat -c %Y "$stamp" 2>/dev/null || echo 0)"
+  if [ -x "$USAGE_FETCH" ] && [ $(( now - last )) -ge "$USAGE_CACHE_TTL" ]; then
+    mkdir -p "$DATA_DIR"; : > "$stamp"
+    "$USAGE_FETCH" >/dev/null 2>&1 || true
+  fi
+  [ -f "$USAGE_API_CACHE" ] && { cat "$USAGE_API_CACHE"; return 0; }
+  return 1
+}
+
+# Cleaned all-models weekly series from the status-line log: current cycle only,
+# per-10-min-bucket median (rejects the minority stale/outlier session reads).
+# Emits "epoch<TAB>value" rows, sorted. Used as the historical curve and as the
+# fallback current value when the API is unavailable.
+clean_statusline_series() {
+  [ -f "$LIMITS_LOG" ] || return 1
+  grep '^{.*}$' "$LIMITS_LOG" 2>/dev/null | jq -rs '
+    def median(f): (map(f) | sort) as $s | $s[(($s|length)/2|floor)];
+    [ .[] | select(.seven_day != null and .ts != null)
+          | {te: (.ts | fromdateiso8601), v: .seven_day, r: (.resets_at // 0)} ]
+    | if length == 0 then empty else
+        (max_by(.r).r) as $c
+        | map(select(.r == $c))
+        | group_by((.te / 600) | floor)
+        | map({te: (map(.te) | min), v: (median(.v))})
+        | sort_by(.te)
+        # The all-models weekly only climbs, so no earlier point can exceed the
+        # current value — drop stale single-session spikes above it (+2 slack).
+        | (.[-1].v) as $last
+        | map(select(.v <= $last + 2))
+        | .[] | [.te, .v] | @tsv
+      end'
+}
+
+# `ccu usage` — current plan-usage meters, like the desktop /usage panel.
+cmd_usage() {
+  local snap; snap="$(usage_snapshot || true)"
+  if [ -z "$snap" ] || [ "$snap" = "null" ]; then
+    local series v
+    series="$(clean_statusline_series 2>/dev/null)"
+    if [ -z "$series" ]; then echo "No usage data (API rate-limited, no status-line log yet)."; return; fi
+    v="$(printf '%s\n' "$series" | tail -1 | cut -f2)"
+    echo "Plan usage limits   (status-line fallback — /api/oauth/usage rate-limited)"
+    echo "Weekly limits"
+    printf '  %-15s %4s%%   (all models; per-model sub-limit needs the API)\n' "All models" "$v"
     return
   fi
 
-  # Isolate the current weekly cycle. Claude Code's resets_at is a Unix epoch;
-  # all samples in a cycle share it. Fall back to a drop-detection cut if absent.
-  local latest_reset cycle
-  latest_reset="$(jq -r '.[-1].resets_at // ""' <<<"$wk")"
-  if [ -n "$latest_reset" ] && [ "$latest_reset" != "null" ]; then
-    cycle="$(jq -c --argjson r "$latest_reset" '[.[] | select(.resets_at == $r)]' <<<"$wk")"
+  local now snap_ep
+  now="$(date +%s)"
+  snap_ep="$(any_to_epoch "$(jq -r '.ts' <<<"$snap")")"
+  printf 'Plan usage limits   (/api/oauth/usage, %s ago)\n' "$(fmt_reltime $(( now - ${snap_ep:-now} )))"
+
+  local su sr
+  su="$(jq -r '.session.util // empty' <<<"$snap")"
+  sr="$(any_to_epoch "$(jq -r '.session.resets_at // empty' <<<"$snap")")"
+  [ -n "$su" ] && printf '  %-15s %4s%%   resets in %s\n' "Current session" "$su" "$(fmt_reltime $(( ${sr:-now} - now )))"
+
+  echo "Weekly limits"
+  local wu wr
+  wu="$(jq -r '.weekly_all.util // empty' <<<"$snap")"
+  wr="$(any_to_epoch "$(jq -r '.weekly_all.resets_at // empty' <<<"$snap")")"
+  [ -n "$wu" ] && printf '  %-15s %4s%%   resets %s\n' "All models" "$wu" "$(epoch_to_disp "${wr:-0}")"
+  jq -r '.weekly_models[]? | [.name, (.util|tostring), (.resets_at // "")] | @tsv' <<<"$snap" \
+    | while IFS=$'\t' read -r name util rst; do
+        local nm rep
+        nm="$(printf '%s' "$name" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
+        rep="$(any_to_epoch "$rst")"
+        printf '  %-15s %4s%%   resets %s\n' "$nm" "$util" "$(epoch_to_disp "${rep:-0}")"
+      done
+}
+
+# Weekly burndown vs. the usage limit. Prefers the deterministic API snapshot for
+# the current value + reset (and per-model sub-limits); charts the historical
+# curve from the cleaned status-line log. --proxy = ccusage cost view (below).
+cmd_pace_week() {
+  if has_flag --proxy "$@"; then pace_week_proxy "$(get_flag_val --ceiling "$@")"; return; fi
+
+  local now snap cur reset_ep source_label series
+  now="$(date +%s)"
+  snap="$(usage_snapshot || true)"
+  series="$(clean_statusline_series 2>/dev/null)"
+
+  if [ -n "$snap" ] && [ "$snap" != "null" ] && [ -n "$(jq -r '.weekly_all.util // empty' <<<"$snap")" ]; then
+    cur="$(jq -r '.weekly_all.util' <<<"$snap")"
+    reset_ep="$(any_to_epoch "$(jq -r '.weekly_all.resets_at' <<<"$snap")")"
+    source_label="api"
+  elif [ -n "$series" ]; then
+    cur="$(printf '%s\n' "$series" | tail -1 | cut -f2)"
+    reset_ep="$(grep '^{.*}$' "$LIMITS_LOG" 2>/dev/null | jq -rs 'map(select(.seven_day!=null))|(max_by(.resets_at//0).resets_at // empty)')"
+    reset_ep="$(any_to_epoch "$reset_ep")" || reset_ep=$(( now + 86400 ))
+    source_label="status-line (cleaned)"
   else
-    cycle="$(jq -c 'def cut: . as $a | (reduce range(1; length) as $i (0; if ($a[$i].seven_day < ($a[$i-1].seven_day - 20)) then $i else . end)) as $s | $a[$s:]; cut' <<<"$wk")"
+    echo "No weekly-limit data yet."
+    echo "  /api/oauth/usage is rate-limited and no status-line samples exist."
+    echo "  Deterministic alternative:  ccu pace week --proxy   (ccusage cost)"
+    return
+  fi
+  local window_start=$(( reset_ep - 7 * 86400 ))
+
+  if [ -n "$series" ]; then
+    { echo "hours,actual,pace"
+      printf '%s\n' "$series" | while IFS=$'\t' read -r ep v; do
+        awk -v ep="$ep" -v ws="$window_start" -v v="$v" 'BEGIN{h=(ep-ws)/3600; printf "%.1f,%.1f,%.1f\n", h, v, 100*h/168}'
+      done
+    } | uplot lines -d ',' -H --fmt xyy -t "Weekly usage vs. limit (all models)" --xlabel "hours into 7-day window" --ylabel "% of weekly limit"
   fi
 
-  # Weekly window (168h) ending at reset. resets_at is an epoch int; keep ISO and
-  # last-sample fallbacks for robustness.
-  local last_ts last_ts_ep reset_ep window_start
-  last_ts="$(jq -r '.[-1].ts' <<<"$cycle")"
-  last_ts_ep="$(iso_to_epoch "$last_ts")"
-  if printf '%s' "$latest_reset" | grep -qE '^[0-9]+$'; then
-    reset_ep="$latest_reset"
-  elif [ -n "$latest_reset" ] && [ "$latest_reset" != "null" ] && reset_ep="$(iso_to_epoch "$latest_reset" 2>/dev/null)"; then
-    :
-  else
-    reset_ep=$(( last_ts_ep + 86400 ))
-  fi
-  window_start=$(( reset_ep - 7 * 86400 ))
+  # Deterministic pace + projection from the current value and elapsed fraction.
+  local frac projected verdict pace_pct
+  frac="$(awk -v n="$now" -v ws="$window_start" 'BEGIN{print (n-ws)/604800}')"
+  pace_pct="$(awk -v f="$frac" 'BEGIN{print f*100}')"
+  projected="$(awk -v c="$cur" -v f="$frac" 'BEGIN{ if (f<=0) print c; else print c/f }')"
+  verdict="$(awk -v p="$projected" 'BEGIN{print (p>=100)?"projected to exceed the weekly limit":"on track to stay under"}')"
+  printf '  now %s%%  ·  ideal pace %.0f%%  ·  projected at reset %.0f%%  ·  %s\n' "$cur" "$pace_pct" "$projected" "$verdict"
+  printf '  reset %s  ·  source: %s\n' "$(epoch_to_disp "$reset_ep")" "$source_label"
 
-  { echo "hours,actual,pace"
-    jq -r '.[] | [.ts, .seven_day] | @tsv' <<<"$cycle" | while IFS=$'\t' read -r ts sd; do
-      ep="$(iso_to_epoch "$ts")" || continue
-      awk -v ep="$ep" -v ws="$window_start" -v sd="$sd" 'BEGIN{h=(ep-ws)/3600; printf "%.1f,%.1f,%.1f\n", h, sd, 100*h/168}'
-    done
-  } | uplot lines -d ',' -H --fmt xyy -t "Weekly usage vs. limit" --xlabel "hours into 7-day window" --ylabel "% of weekly limit"
-
-  # Project current burn rate forward to the reset.
-  local first_ts first_sd last_sd first_ep dt_h
-  first_ts="$(jq -r '.[0].ts' <<<"$cycle")"
-  first_sd="$(jq -r '.[0].seven_day' <<<"$cycle")"
-  last_sd="$(jq -r '.[-1].seven_day' <<<"$cycle")"
-  first_ep="$(iso_to_epoch "$first_ts")"
-  dt_h="$(awk -v a="$first_ep" -v b="$last_ts_ep" 'BEGIN{print (b-a)/3600}')"
-  if awk "BEGIN{exit !(${dt_h}>0)}"; then
-    local projected verdict
-    projected="$(awk -v cur="$last_sd" -v fs="$first_sd" -v dt="$dt_h" -v rr="$reset_ep" -v lt="$last_ts_ep" 'BEGIN{slope=(cur-fs)/dt; print cur+slope*((rr-lt)/3600)}')"
-    verdict="$(awk -v p="$projected" 'BEGIN{print (p>=100)?"projected to hit the weekly limit before reset":"on track to stay under"}')"
-    printf '  now %.1f%%  ·  projected at reset %.1f%%  ·  %s\n' "$last_sd" "$projected" "$verdict"
-    printf '  reset %s\n' "$(epoch_to_disp "$reset_ep")"
-  else
-    printf '  now %.1f%% of weekly limit\n' "$last_sd"
+  if [ -n "$snap" ] && [ "$snap" != "null" ]; then
+    jq -r '.weekly_models[]? | "  \(.name) sub-limit: \(.util)%"' <<<"$snap" 2>/dev/null
   fi
 }
 
 # --- Help ---
 cmd_pace_help() {
   echo "Pacing / burndown charts:"
-  echo "  claude-usage pace week   - Usage vs. the weekly limit (authoritative % from the statusline log)"
-  echo "  claude-usage pace week --proxy   - ccusage cost view of the last 7 days (works today)"
+  echo "  claude-usage usage       - Current plan-usage meters (session + weekly, like the app)"
+  echo "  claude-usage pace week   - Burndown vs. the weekly limit (API-preferred, statusline fallback)"
+  echo "  claude-usage pace week --proxy   - ccusage cost view of the last 7 days (fully deterministic)"
   echo "  claude-usage pace month  - Cumulative cost this month vs. a pace line"
   echo ""
   echo "Options:"
@@ -396,6 +488,7 @@ cmd_help() {
   echo "  claude-usage monthly - Monthly cost chart"
   echo "  claude-usage sessions - Top sessions by cost"
   echo "  claude-usage blocks  - 5-hour billing blocks"
+  echo "  claude-usage usage   - Current plan-usage meters (like the desktop /usage panel)"
   echo "  claude-usage pace week  - Burndown vs. the weekly usage limit"
   echo "  claude-usage pace month - Cumulative cost this month vs. pace"
   echo "  claude-usage status  - Current 5-hour block status"
@@ -418,6 +511,7 @@ main() {
     sessions)        cmd_sessions "$@";;
     blocks)          cmd_blocks "$@";;
     status)          cmd_status "$@";;
+    usage)           cmd_usage "$@";;
     refresh-pricing) cmd_refresh_pricing "$@";;
     pace)
       local sub="${1:-}"; shift || true

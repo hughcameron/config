@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# cc-usage-fetch — fetch the deterministic plan-usage meters from Anthropic's
+# /api/oauth/usage endpoint (the same source the Claude Code /usage panel uses)
+# and cache them. This is the authoritative, cross-session source for
+# `ccu pace week` — unlike the per-session status-line snapshots, which freeze
+# at session init and can be stale.
+#
+# The endpoint is aggressively rate-limited (429) for Max users; on any failure
+# we keep the last good cache rather than overwrite it, and exit non-zero so the
+# caller can fall back.
+#
+# Output: writes usage-api.json (latest good snapshot) and appends usage-log.jsonl
+# (append-only series for the burndown). Prints a one-line summary to stderr.
+# The OAuth token is never printed.
+set -uo pipefail
+
+DATA_DIR="${HOME}/.config/nushell/analysis/claude-usage/data"
+CACHE="${DATA_DIR}/usage-api.json"
+HISTORY="${DATA_DIR}/usage-log.jsonl"
+KEYCHAIN_SERVICE="Claude Code-credentials"
+ENDPOINT="https://api.anthropic.com/api/oauth/usage"
+
+log() { printf 'cc-usage-fetch: %s\n' "$*" >&2; }
+
+token="$(security find-generic-password -s "$KEYCHAIN_SERVICE" -w 2>/dev/null \
+         | jq -r '.claudeAiOauth.accessToken // .accessToken // empty' 2>/dev/null)"
+if [ -z "$token" ]; then log "no OAuth token in keychain ($KEYCHAIN_SERVICE)"; exit 3; fi
+
+resp="$(curl -sS -m 15 -w $'\n__HTTP__%{http_code}' \
+  -H "Authorization: Bearer ${token}" \
+  -H "anthropic-beta: oauth-2025-04-20" \
+  -H "User-Agent: ccu-usage-fetch" \
+  "$ENDPOINT" 2>/dev/null)"
+code="$(printf '%s' "$resp" | sed -n 's/.*__HTTP__//p' | tail -1)"
+body="$(printf '%s' "$resp" | sed 's/__HTTP__[0-9]*$//')"
+
+if [ "$code" != "200" ]; then
+  # 429 = rate limited (expected/frequent), 401 = token expired (Claude Code will
+  # refresh on its next use). Either way, keep the last good cache.
+  log "HTTP ${code:-timeout} — keeping last good cache"
+  exit 1
+fi
+
+# Normalize to a compact snapshot. The API uses `utilization` (0-100) and ISO
+# resets_at; we keep both and stash the raw payload for any future meters.
+snap="$(printf '%s' "$body" | jq -c \
+  --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+    def m(x): if (x | type) == "object" and (x.utilization != null)
+              then {util: x.utilization, resets_at: x.resets_at} else null end;
+    {
+      ts: $ts,
+      source: "api",
+      session:    m(.five_hour),
+      weekly_all: m(.seven_day),
+      # per-model weekly sub-limits (opus/sonnet/fable/…), captured dynamically
+      weekly_models: [ to_entries[]
+        | select((.key | startswith("seven_day_")) and (.key != "seven_day_oauth_apps"))
+        | select((.value | type) == "object" and (.value.utilization != null))
+        | {name: (.key | ltrimstr("seven_day_")), util: .value.utilization, resets_at: .value.resets_at} ],
+      raw: .
+    }' 2>/dev/null)"
+
+if [ -z "$snap" ] || [ "$snap" = "null" ]; then
+  log "unexpected response shape — not caching"
+  exit 2
+fi
+
+mkdir -p "$DATA_DIR"
+printf '%s\n' "$snap" > "$CACHE"
+printf '%s\n' "$snap" >> "$HISTORY"
+log "ok (weekly_all $(printf '%s' "$snap" | jq -r '.weekly_all.util // "?"')%)"
