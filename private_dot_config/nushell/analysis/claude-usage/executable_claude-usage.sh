@@ -415,9 +415,33 @@ cmd_usage() {
       done
 }
 
-# Weekly burndown vs. the usage limit. Prefers the deterministic API snapshot for
-# the current value + reset (and per-model sub-limits); charts the historical
-# curve from the cleaned status-line log. --proxy = ccusage cost view (below).
+# Rebuild the DuckDB only if missing or older than $1 seconds (keeps repeated
+# `pace week` runs snappy while staying reasonably current).
+ensure_db() {
+  local max="${1:-0}" age
+  if [ -f "$DB_PATH" ] && [ "$max" -gt 0 ]; then
+    age=$(( $(date +%s) - $(stat -f %m "$DB_PATH" 2>/dev/null || stat -c %Y "$DB_PATH" 2>/dev/null || echo 0) ))
+    [ "$age" -lt "$max" ] && return 0
+  fi
+  echo "  (rebuilding usage db from transcripts…)" >&2
+  build_db >&2
+}
+
+# Exact hourly cumulative cost since window_start (epoch $1), from fact_usage.
+# Emits "days_into_window<TAB>cumcost". Honors the precise mid-day reset boundary,
+# unlike ccusage's calendar-day buckets. Used to reconstruct the weekly-% shape
+# for days the status-line log didn't cover.
+cost_curve_db() {
+  local ws="$1" ws_utc
+  ws_utc="$(date -u -r "$ws" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -u -d "@$ws" '+%Y-%m-%d %H:%M:%S')"
+  query_db "WITH h AS (SELECT date_trunc('hour', event_timestamp) AS hr, SUM(cost_usd) AS c FROM fact_usage WHERE event_timestamp >= TIMESTAMP '${ws_utc}' GROUP BY 1) SELECT ROUND((epoch(hr) - ${ws})/86400.0, 4) AS day, ROUND(SUM(c) OVER (ORDER BY hr), 4) AS cum FROM h ORDER BY hr" \
+    | tail -n +2 | tr ',' '\t'
+}
+
+# Weekly burndown vs. the usage limit. Current value + reset (+ per-model
+# sub-limits) come from the authoritative API snapshot (statusline fallback);
+# the historical curve is reconstructed from usage cost so it covers the WHOLE
+# week, calibrated so the latest point equals the current %. --proxy = ccusage.
 cmd_pace_week() {
   if has_flag --proxy "$@"; then pace_week_proxy "$(get_flag_val --ceiling "$@")"; return; fi
 
@@ -444,26 +468,41 @@ cmd_pace_week() {
   local window_start=$(( reset_ep - 7 * 86400 ))
 
   # Chart against the FULL 7-day window (x = days 0..7, y = 0..100% of limit).
-  # Anchor at (0,0): the weekly counter is 0% at reset. The cleaned status-line
-  # history draws the curve; with API-only data we draw a 2-point line to now.
-  # The empty right of the axis is the week remaining.
-  local ws_disp reset_disp now_day
+  # Anchor at (0,0): the weekly counter is 0% at reset. Empty right = week left.
+  local ws_disp reset_disp now_day curve_note
   ws_disp="$(date -r "$window_start" +'%a %d %b' 2>/dev/null || date -d "@$window_start" +'%a %d %b')"
   reset_disp="$(date -r "$reset_ep" +'%a %d %b' 2>/dev/null || date -d "@$reset_ep" +'%a %d %b')"
-  now_day="$(awk -v n="$now" -v ws="$window_start" 'BEGIN{printf "%.2f",(n-ws)/86400}')"
-  {
-    echo "day,actual,pace"
-    echo "0,0,0"
-    if [ -n "$series" ]; then
+  now_day="$(awk -v n="$now" -v ws="$window_start" 'BEGIN{printf "%.4f",(n-ws)/86400}')"
+
+  # Reconstruct the whole-week curve from usage cost (transcripts cover the full
+  # week; the status-line log only started mid-week). Shape is real (exact reset
+  # boundary, hourly); scale is calibrated so the latest point equals the current
+  # authoritative % — cost is the best available proxy for the weekly limit.
+  ensure_db 900
+  local cost_rows total factor
+  cost_rows="$(cost_curve_db "$window_start" 2>/dev/null)"
+  total="$(printf '%s\n' "$cost_rows" | tail -1 | cut -f2)"
+
+  if [ -n "$cost_rows" ] && awk "BEGIN{exit !(${total:-0}>0)}"; then
+    factor="$(awk -v c="$cur" -v t="$total" 'BEGIN{print c/t}')"
+    { echo "day,actual,pace"; echo "0,0,0"
+      printf '%s\n' "$cost_rows" | awk -F'\t' -v f="$factor" -v nd="$now_day" \
+        '{ x=$1; if(x>nd)x=nd; if(x>0.01) printf "%.3f,%.2f,%.2f\n", x, $2*f, 100*x/7 }'
+    } | uplot lines -d ',' -H --fmt xyy --xlim 0,7 --ylim 0,100 \
+          -t "Weekly usage vs. limit (all models)" \
+          --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "% of weekly limit"
+    curve_note="  curve: estimated from usage cost, anchored to current ${cur}%"
+  else
+    # Fallback: cleaned status-line series (may not cover the full week).
+    { echo "day,actual,pace"; echo "0,0,0"
       printf '%s\n' "$series" | while IFS=$'\t' read -r ep v; do
         awk -v ep="$ep" -v ws="$window_start" -v v="$v" 'BEGIN{d=(ep-ws)/86400; if (d>0.01) printf "%.2f,%.1f,%.1f\n", d, v, 100*d/7}'
       done
-    else
-      awk -v d="$now_day" -v c="$cur" 'BEGIN{if (d>0.01) printf "%.2f,%.1f,%.1f\n", d, c, 100*d/7}'
-    fi
-  } | uplot lines -d ',' -H --fmt xyy --xlim 0,7 --ylim 0,100 \
-        -t "Weekly usage vs. limit (all models)" \
-        --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "% of weekly limit"
+    } | uplot lines -d ',' -H --fmt xyy --xlim 0,7 --ylim 0,100 \
+          -t "Weekly usage vs. limit (all models)" \
+          --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "% of weekly limit"
+    curve_note="  curve: status-line log (started mid-week)"
+  fi
 
   # Deterministic pace + projection from the current value and elapsed fraction.
   local frac projected verdict pace_pct
@@ -473,6 +512,7 @@ cmd_pace_week() {
   verdict="$(awk -v p="$projected" 'BEGIN{print (p>=100)?"projected to exceed the weekly limit":"on track to stay under"}')"
   printf '  now %s%%  ·  ideal pace %.0f%%  ·  projected at reset %.0f%%  ·  %s\n' "$cur" "$pace_pct" "$projected" "$verdict"
   printf '  reset %s  ·  source: %s\n' "$(epoch_to_disp "$reset_ep")" "$source_label"
+  [ -n "${curve_note:-}" ] && printf '%s\n' "$curve_note"
 
   if [ -n "$snap" ] && [ "$snap" != "null" ]; then
     jq -r '.weekly_models[]? | "  \(.name) sub-limit: \(.util)%"' <<<"$snap" 2>/dev/null
