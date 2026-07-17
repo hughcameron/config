@@ -87,6 +87,7 @@ $env.STARSHIP_CONFIG = '/Users/hugh/.config/starship/starship.toml'
 # CLAUDE
 alias cc = claude
 alias ccu = bash ~/.config/nushell/analysis/claude-usage/claude-usage.sh
+alias ccusage = bunx ccusage@latest
 
 # NAVI
 source ~/.config/nushell/scripts/navi.nu
