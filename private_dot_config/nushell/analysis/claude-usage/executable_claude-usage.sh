@@ -443,13 +443,27 @@ cmd_pace_week() {
   fi
   local window_start=$(( reset_ep - 7 * 86400 ))
 
-  if [ -n "$series" ]; then
-    { echo "hours,actual,pace"
+  # Chart against the FULL 7-day window (x = days 0..7, y = 0..100% of limit).
+  # Anchor at (0,0): the weekly counter is 0% at reset. The cleaned status-line
+  # history draws the curve; with API-only data we draw a 2-point line to now.
+  # The empty right of the axis is the week remaining.
+  local ws_disp reset_disp now_day
+  ws_disp="$(date -r "$window_start" +'%a %d %b' 2>/dev/null || date -d "@$window_start" +'%a %d %b')"
+  reset_disp="$(date -r "$reset_ep" +'%a %d %b' 2>/dev/null || date -d "@$reset_ep" +'%a %d %b')"
+  now_day="$(awk -v n="$now" -v ws="$window_start" 'BEGIN{printf "%.2f",(n-ws)/86400}')"
+  {
+    echo "day,actual,pace"
+    echo "0,0,0"
+    if [ -n "$series" ]; then
       printf '%s\n' "$series" | while IFS=$'\t' read -r ep v; do
-        awk -v ep="$ep" -v ws="$window_start" -v v="$v" 'BEGIN{h=(ep-ws)/3600; printf "%.1f,%.1f,%.1f\n", h, v, 100*h/168}'
+        awk -v ep="$ep" -v ws="$window_start" -v v="$v" 'BEGIN{d=(ep-ws)/86400; if (d>0.01) printf "%.2f,%.1f,%.1f\n", d, v, 100*d/7}'
       done
-    } | uplot lines -d ',' -H --fmt xyy -t "Weekly usage vs. limit (all models)" --xlabel "hours into 7-day window" --ylabel "% of weekly limit"
-  fi
+    else
+      awk -v d="$now_day" -v c="$cur" 'BEGIN{if (d>0.01) printf "%.2f,%.1f,%.1f\n", d, c, 100*d/7}'
+    fi
+  } | uplot lines -d ',' -H --fmt xyy --xlim 0,7 --ylim 0,100 \
+        -t "Weekly usage vs. limit (all models)" \
+        --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "% of weekly limit"
 
   # Deterministic pace + projection from the current value and elapsed fraction.
   local frac projected verdict pace_pct
