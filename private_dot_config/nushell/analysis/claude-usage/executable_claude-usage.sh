@@ -467,8 +467,10 @@ cmd_pace_week() {
   fi
   local window_start=$(( reset_ep - 7 * 86400 ))
 
-  # Chart against the FULL 7-day window (x = days 0..7, y = 0..100% of limit).
-  # Anchor at (0,0): the weekly counter is 0% at reset. Empty right = week left.
+  # Plot how far we're AHEAD / BEHIND the on-pace line (actual% − ideal-pace%)
+  # across the week. Both axes auto-scale so a few points of drift fill the
+  # frame — the old fixed 0–100 / 0–7 limits squashed the whole signal into the
+  # corner. The flat 0 series is the on-pace reference; above it = over-pacing.
   local ws_disp reset_disp now_day curve_note
   ws_disp="$(date -r "$window_start" +'%a %d %b' 2>/dev/null || date -d "@$window_start" +'%a %d %b')"
   reset_disp="$(date -r "$reset_ep" +'%a %d %b' 2>/dev/null || date -d "@$reset_ep" +'%a %d %b')"
@@ -485,32 +487,33 @@ cmd_pace_week() {
 
   if [ -n "$cost_rows" ] && awk "BEGIN{exit !(${total:-0}>0)}"; then
     factor="$(awk -v c="$cur" -v t="$total" 'BEGIN{print c/t}')"
-    { echo "day,actual,pace"; echo "0,0,0"
+    { echo "day,ahead,on-pace"; echo "0,0,0"
       printf '%s\n' "$cost_rows" | awk -F'\t' -v f="$factor" -v nd="$now_day" \
-        '{ x=$1; if(x>nd)x=nd; if(x>0.01) printf "%.3f,%.2f,%.2f\n", x, $2*f, 100*x/7 }'
-    } | uplot lines -d ',' -H --fmt xyy --xlim 0,7 --ylim 0,100 \
-          -t "Weekly usage vs. limit (all models)" \
-          --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "% of weekly limit"
+        '{ x=$1; if(x>nd)x=nd; if(x>0.01) printf "%.3f,%.2f,0\n", x, $2*f - 100*x/7 }'
+    } | uplot lines -d ',' -H --fmt xyy \
+          -t "Weekly pace — points ahead of / behind pace" \
+          --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "points ahead of pace"
     curve_note="  curve: estimated from usage cost, anchored to current ${cur}%"
   else
     # Fallback: cleaned status-line series (may not cover the full week).
-    { echo "day,actual,pace"; echo "0,0,0"
+    { echo "day,ahead,on-pace"; echo "0,0,0"
       printf '%s\n' "$series" | while IFS=$'\t' read -r ep v; do
-        awk -v ep="$ep" -v ws="$window_start" -v v="$v" 'BEGIN{d=(ep-ws)/86400; if (d>0.01) printf "%.2f,%.1f,%.1f\n", d, v, 100*d/7}'
+        awk -v ep="$ep" -v ws="$window_start" -v v="$v" 'BEGIN{d=(ep-ws)/86400; if (d>0.01) printf "%.2f,%.1f,0\n", d, v - 100*d/7}'
       done
-    } | uplot lines -d ',' -H --fmt xyy --xlim 0,7 --ylim 0,100 \
-          -t "Weekly usage vs. limit (all models)" \
-          --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "% of weekly limit"
+    } | uplot lines -d ',' -H --fmt xyy \
+          -t "Weekly pace — points ahead of / behind pace" \
+          --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "points ahead of pace"
     curve_note="  curve: status-line log (started mid-week)"
   fi
 
   # Deterministic pace + projection from the current value and elapsed fraction.
-  local frac projected verdict pace_pct
+  local frac projected pace_pct pace_note
   frac="$(awk -v n="$now" -v ws="$window_start" 'BEGIN{print (n-ws)/604800}')"
   pace_pct="$(awk -v f="$frac" 'BEGIN{print f*100}')"
   projected="$(awk -v c="$cur" -v f="$frac" 'BEGIN{ if (f<=0) print c; else print c/f }')"
-  verdict="$(awk -v p="$projected" 'BEGIN{print (p>=100)?"projected to exceed the weekly limit":"on track to stay under"}')"
-  printf '  now %s%%  ·  ideal pace %.0f%%  ·  pacing at %.0f%%  ·  %s\n' "$cur" "$pace_pct" "$projected" "$verdict"
+  # How far ahead/behind the on-pace line, in limit-points — ties to the chart's y.
+  pace_note="$(awk -v c="$cur" -v p="$pace_pct" 'BEGIN{ d=c-p; ad=(d<0)?-d:d; if (ad<0.5) printf "on pace"; else if (d>0) printf "%.0f pts ahead of pace", ad; else printf "%.0f pts behind pace", ad }')"
+  printf '  now %s%%  ·  ideal pace %.0f%%  ·  pacing at %.0f%%  ·  %s\n' "$cur" "$pace_pct" "$projected" "$pace_note"
   printf '  reset %s  ·  source: %s\n' "$(epoch_to_disp "$reset_ep")" "$source_label"
   [ -n "${curve_note:-}" ] && printf '%s\n' "$curve_note"
 
