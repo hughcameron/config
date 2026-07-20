@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# ccu — Claude usage analytics. Thin PATH-resident wrapper around the analysis
+# script so `ccu` works in every context, not just interactive shells: the
+# shell aliases (zsh/nushell) only exist in interactive sessions, so `watch`,
+# cron, and `sh -c` couldn't find `ccu` before. This can.
+exec bash "${HOME}/.config/nushell/analysis/claude-usage/claude-usage.sh" "$@"
