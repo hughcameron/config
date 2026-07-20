@@ -1,0 +1,12 @@
+% tracking, usage, pacing, claude
+
+# Watch Claude weekly usage pacing live — colour kept, Ghostty tab named 'pacing'
+printf '\033]0;pacing\007'; watch -c -n <interval> "script -q /dev/null ccu pace week"; printf '\033]0;\007'
+
+# One-off weekly usage pacing (no watch)
+ccu pace week
+
+# Current plan-usage meters (session + weekly, like the desktop panel)
+ccu usage
+
+$ interval: echo -e '30\n60\n15\n120\n300'

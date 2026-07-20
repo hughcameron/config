@@ -510,7 +510,7 @@ cmd_pace_week() {
   pace_pct="$(awk -v f="$frac" 'BEGIN{print f*100}')"
   projected="$(awk -v c="$cur" -v f="$frac" 'BEGIN{ if (f<=0) print c; else print c/f }')"
   verdict="$(awk -v p="$projected" 'BEGIN{print (p>=100)?"projected to exceed the weekly limit":"on track to stay under"}')"
-  printf '  now %s%%  ·  ideal pace %.0f%%  ·  projected at reset %.0f%%  ·  %s\n' "$cur" "$pace_pct" "$projected" "$verdict"
+  printf '  now %s%%  ·  ideal pace %.0f%%  ·  pacing at %.0f%%  ·  %s\n' "$cur" "$pace_pct" "$projected" "$verdict"
   printf '  reset %s  ·  source: %s\n' "$(epoch_to_disp "$reset_ep")" "$source_label"
   [ -n "${curve_note:-}" ] && printf '%s\n' "$curve_note"
 
