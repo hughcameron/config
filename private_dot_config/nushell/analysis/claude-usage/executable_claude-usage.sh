@@ -490,6 +490,11 @@ cmd_pace_week() {
     { echo "day,ahead,on-pace"; echo "0,0,0"
       printf '%s\n' "$cost_rows" | awk -F'\t' -v f="$factor" -v nd="$now_day" \
         '{ x=$1; if(x>nd)x=nd; if(x>0.01) printf "%.3f,%.2f,0\n", x, $2*f - 100*x/7 }'
+      # Idle tail: cost stops at the last transcript, but the on-pace line keeps
+      # climbing until "now". Extend the actual curve flat (usage is unchanged
+      # while idle) to now_day so the chart tracks the shrinking lead and lands on
+      # the topline number, instead of freezing at the last activity.
+      awk -v c="$cur" -v nd="$now_day" 'BEGIN{ if (nd>0.01) printf "%.3f,%.2f,0\n", nd, c - 100*nd/7 }'
     } | uplot lines -d ',' -H --fmt xyy \
           -t "Weekly pace — points ahead of / behind pace" \
           --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "points ahead of pace"
@@ -500,6 +505,8 @@ cmd_pace_week() {
       printf '%s\n' "$series" | while IFS=$'\t' read -r ep v; do
         awk -v ep="$ep" -v ws="$window_start" -v v="$v" 'BEGIN{d=(ep-ws)/86400; if (d>0.01) printf "%.2f,%.1f,0\n", d, v - 100*d/7}'
       done
+      # Idle tail (see cost branch): hold usage flat to now_day so the lead decays.
+      awk -v c="$cur" -v nd="$now_day" 'BEGIN{ if (nd>0.01) printf "%.2f,%.1f,0\n", nd, c - 100*nd/7 }'
     } | uplot lines -d ',' -H --fmt xyy \
           -t "Weekly pace — points ahead of / behind pace" \
           --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "points ahead of pace"
