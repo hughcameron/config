@@ -10,10 +10,10 @@ y() {
     rm -f -- "$tmp"
 }
 
-# Launch a 5-window tmux workspace (claude / zsh / nvim / lazygit / yazi) in a directory.
+# Launch a 2-window tmux workspace (claude / zsh) in a directory.
 # Usage: lab [dir]   — defaults to $PWD. Session name = directory basename.
-# Reattaches if a session with that name already exists; each window drops to a
-# shell when its tool exits. Detached new-window keeps claude focused on first launch.
+# Reattaches if a session with that name already exists; the claude window drops to
+# a shell when claude exits. Detached new-window keeps claude focused on first launch.
 lab() {
     local dir="${1:-$PWD}"
     dir="${dir:A}"
@@ -29,9 +29,6 @@ lab() {
     if ! tmux has-session -t="$name" 2>/dev/null; then
         tmux new-session  -d -s "$name" -c "$dir" -n claude   "claude $claude_perms; exec $shell"
         tmux new-window -d -t "$name:" -c "$dir" -n zsh      "exec $shell"
-        tmux new-window -d -t "$name:" -c "$dir" -n nvim     "nvim; exec $shell"
-        tmux new-window -d -t "$name:" -c "$dir" -n lazygit  "lazygit; exec $shell"
-        tmux new-window -d -t "$name:" -c "$dir" -n yazi     "yazi; exec $shell"
     fi
 
     if [[ -n "$TMUX" ]]; then
