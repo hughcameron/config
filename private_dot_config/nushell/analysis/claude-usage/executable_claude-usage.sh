@@ -438,36 +438,39 @@ cost_curve_db() {
     | tail -n +2 | tr ',' '\t'
 }
 
-# Rounded "MIN,MAX" y-limits for the pace-delta chart, read from the chart CSV on
-# stdin (col2 = the ahead/behind series). The raw autoscaled bounds jitter every
-# refresh because the calibration factor (cur/total) and elapsed time keep drifting
-# — a 1% tick in cur rescales the whole history by ~2%. Snapping the frame to a
-# "nice" step (1/2/5 × 10ⁿ) keeps the labels put until the data really crosses a
-# boundary. Always spans 0 (the on-pace line) and floors the span so early-week
-# noise isn't hyper-zoomed. Pass as --ylim=… (the leading − breaks the space form).
-nice_ylim() {
-  awk -F',' '
-    function floor(x){ return (x==int(x))?x:((x<0)?int(x)-1:int(x)) }
-    function ceil(x){  return (x==int(x))?x:((x<0)?int(x):int(x)+1) }
-    NR>1 && $2!="" { v=$2+0; if(!seen){mn=v;mx=v;seen=1} else {if(v<mn)mn=v; if(v>mx)mx=v} }
-    END{
-      if(!seen){print "-1,1"; exit}
-      if(mn>0)mn=0; if(mx<0)mx=0;
-      rng=mx-mn; if(rng<2)rng=2;
-      raw=rng/4;
-      mag=1; while(mag*10<=raw)mag*=10; while(mag>raw)mag/=10;
-      n=raw/mag;
-      if(n<1.5)step=mag; else if(n<3)step=2*mag; else if(n<7)step=5*mag; else step=10*mag;
-      ylo=step*floor(mn/step); yhi=step*ceil(mx/step);
-      if(yhi-ylo<2){ylo-=step; yhi+=step}
-      printf "%g,%g", ylo, yhi
-    }'
+# Immutable weekly-% history from the authoritative API log (usage-log.jsonl):
+# each row is a real value recorded at a real time, so re-plotting never moves the
+# past — unlike the cost reconstruction, which re-derives every point from the
+# current total and so "breathes" as cur/total drift. Current cycle only
+# (ts >= window_start), collapsed to per-10-min buckets taking the max (the weekly
+# counter only ever climbs). Emits "day<TAB>pct" at hourly resolution (matches the
+# old cost curve's granularity — fine enough for shape, coarse enough to stay clean).
+logged_pct_series() {
+  local ws="$1"
+  [ -f "$USAGE_HISTORY" ] || return 1
+  grep '^{' "$USAGE_HISTORY" 2>/dev/null | jq -rs --argjson ws "$ws" '
+    [ .[] | select(.ts != null and .weekly_all != null and .weekly_all.util != null)
+          | {t: (.ts | fromdateiso8601), v: .weekly_all.util} ]
+    | map(select(.t >= $ws)) | sort_by(.t)
+    | group_by((.t / 3600) | floor) | map({t: (map(.t) | max), v: (map(.v) | max)})
+    | .[] | [ ((.t - $ws) / 86400), .v ] | @tsv'
+}
+
+# Turn a "day<TAB>pct" series (stdin) into the pace-delta chart CSV
+# (day,ahead,on-pace): anchor at (0,0) — the counter is 0% at reset — plot
+# delta = pct − on-pace(day), clamp day to now_day, then append the idle tail
+# (usage held flat to now_day) so the curve reaches "now" and lands on the topline.
+build_delta_csv() {  # $1=now_day  $2=cur  ; "day<TAB>pct" series on stdin
+  local nd="$1" cur="$2"
+  echo "day,ahead,on-pace"; echo "0,0,0"
+  awk -F'\t' -v nd="$nd" '{ d=$1; if(d>nd)d=nd; if(d>0.01) printf "%.3f,%.2f,0\n", d, $2 - 100*d/7 }'
+  awk -v c="$cur" -v nd="$nd" 'BEGIN{ if (nd>0.01) printf "%.3f,%.2f,0\n", nd, c - 100*nd/7 }'
 }
 
 # Weekly burndown vs. the usage limit. Current value + reset (+ per-model
-# sub-limits) come from the authoritative API snapshot (statusline fallback);
-# the historical curve is reconstructed from usage cost so it covers the WHOLE
-# week, calibrated so the latest point equals the current %. --proxy = ccusage.
+# sub-limits) come from the authoritative API snapshot (statusline fallback). The
+# historical curve is the RECORDED weekly % over time (immutable — the past never
+# changes on refresh); cost reconstruction is only a last resort. --proxy = ccusage.
 cmd_pace_week() {
   if has_flag --proxy "$@"; then pace_week_proxy "$(get_flag_val --ceiling "$@")"; return; fi
 
@@ -493,54 +496,46 @@ cmd_pace_week() {
   fi
   local window_start=$(( reset_ep - 7 * 86400 ))
 
-  # Plot how far we're AHEAD / BEHIND the on-pace line (actual% − ideal-pace%)
-  # across the week. Both axes auto-scale so a few points of drift fill the
-  # frame — the old fixed 0–100 / 0–7 limits squashed the whole signal into the
-  # corner. The flat 0 series is the on-pace reference; above it = over-pacing.
+  # Plot how far we're AHEAD / BEHIND the on-pace line (weekly% − ideal-pace%)
+  # across the week. Both axes auto-scale so a few points of drift fill the frame;
+  # the flat 0 series is the on-pace reference — above it = over-pacing.
   local ws_disp reset_disp now_day curve_note
   ws_disp="$(date -r "$window_start" +'%a %d %b' 2>/dev/null || date -d "@$window_start" +'%a %d %b')"
   reset_disp="$(date -r "$reset_ep" +'%a %d %b' 2>/dev/null || date -d "@$reset_ep" +'%a %d %b')"
   now_day="$(awk -v n="$now" -v ws="$window_start" 'BEGIN{printf "%.4f",(n-ws)/86400}')"
 
-  # Reconstruct the whole-week curve from usage cost (transcripts cover the full
-  # week; the status-line log only started mid-week). Shape is real (exact reset
-  # boundary, hourly); scale is calibrated so the latest point equals the current
-  # authoritative % — cost is the best available proxy for the weekly limit.
-  ensure_db 900
-  local cost_rows total factor chart_csv ylim
-  cost_rows="$(cost_curve_db "$window_start" 2>/dev/null)"
-  total="$(printf '%s\n' "$cost_rows" | tail -1 | cut -f2)"
+  # Pick the %-history source, best (immutable) first:
+  #   1. recorded weekly % from the API log — the past is FIXED, never re-derived.
+  #   2. cleaned status-line % — also recorded/immutable, just noisier.
+  #   3. cost reconstruction — back-calibrated to the current %, so the past
+  #      "breathes" as cur/total drift; only when no % history exists yet. It needs
+  #      the DuckDB, so we build it lazily here rather than on every run.
+  local hist hist_n pct_series cost_rows total factor chart_csv
+  hist="$(logged_pct_series "$window_start" 2>/dev/null)"
+  hist_n="$(printf '%s' "$hist" | grep -c .)"
 
-  if [ -n "$cost_rows" ] && awk "BEGIN{exit !(${total:-0}>0)}"; then
-    factor="$(awk -v c="$cur" -v t="$total" 'BEGIN{print c/t}')"
-    chart_csv="$( { echo "day,ahead,on-pace"; echo "0,0,0"
-      printf '%s\n' "$cost_rows" | awk -F'\t' -v f="$factor" -v nd="$now_day" \
-        '{ x=$1; if(x>nd)x=nd; if(x>0.01) printf "%.3f,%.2f,0\n", x, $2*f - 100*x/7 }'
-      # Idle tail: cost stops at the last transcript, but the on-pace line keeps
-      # climbing until "now". Extend the actual curve flat (usage is unchanged
-      # while idle) to now_day so the chart tracks the shrinking lead and lands on
-      # the topline number, instead of freezing at the last activity.
-      awk -v c="$cur" -v nd="$now_day" 'BEGIN{ if (nd>0.01) printf "%.3f,%.2f,0\n", nd, c - 100*nd/7 }'
-    } )"
-    curve_note="  curve: estimated from usage cost, anchored to current ${cur}%"
+  if [ "$hist_n" -ge 3 ]; then
+    pct_series="$hist"
+    curve_note="  curve: recorded weekly % (API history — the past is fixed)"
+  elif [ -n "$series" ]; then
+    pct_series="$(printf '%s\n' "$series" | awk -F'\t' -v ws="$window_start" '{printf "%.4f\t%s\n",($1-ws)/86400,$2}')"
+    curve_note="  curve: status-line % history (cleaned)"
   else
-    # Fallback: cleaned status-line series (may not cover the full week).
-    chart_csv="$( { echo "day,ahead,on-pace"; echo "0,0,0"
-      printf '%s\n' "$series" | while IFS=$'\t' read -r ep v; do
-        awk -v ep="$ep" -v ws="$window_start" -v v="$v" 'BEGIN{d=(ep-ws)/86400; if (d>0.01) printf "%.2f,%.1f,0\n", d, v - 100*d/7}'
-      done
-      # Idle tail (see cost branch): hold usage flat to now_day so the lead decays.
-      awk -v c="$cur" -v nd="$now_day" 'BEGIN{ if (nd>0.01) printf "%.2f,%.1f,0\n", nd, c - 100*nd/7 }'
-    } )"
-    curve_note="  curve: status-line log (started mid-week)"
+    ensure_db 900
+    cost_rows="$(cost_curve_db "$window_start" 2>/dev/null)"
+    total="$(printf '%s\n' "$cost_rows" | tail -1 | cut -f2)"
+    if [ -n "$cost_rows" ] && awk "BEGIN{exit !(${total:-0}>0)}"; then
+      factor="$(awk -v c="$cur" -v t="$total" 'BEGIN{print c/t}')"
+      pct_series="$(printf '%s\n' "$cost_rows" | awk -F'\t' -v f="$factor" '{printf "%s\t%.4f\n",$1,$2*f}')"
+      curve_note="  curve: estimated from usage cost, anchored to ${cur}% (no % history yet)"
+    else
+      pct_series=""
+      curve_note="  curve: (not enough data yet)"
+    fi
   fi
 
-  # Snap the y-limits to a stable step so the axis labels don't jitter on every
-  # refresh as the calibration factor / elapsed time drift (the curve inside still
-  # moves — only the frame is pinned). --ylim=… because the leading − breaks the
-  # space form.
-  ylim="$(printf '%s\n' "$chart_csv" | nice_ylim)"
-  printf '%s\n' "$chart_csv" | uplot lines -d ',' -H --fmt xyy --ylim="$ylim" \
+  chart_csv="$(build_delta_csv "$now_day" "$cur" <<<"$pct_series")"
+  printf '%s\n' "$chart_csv" | uplot lines -d ',' -H --fmt xyy \
         -t "Weekly pace — points ahead of / behind pace" \
         --xlabel "days into week ($ws_disp → $reset_disp)" --ylabel "points ahead of pace"
 
