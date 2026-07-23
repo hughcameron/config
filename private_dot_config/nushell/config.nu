@@ -77,7 +77,7 @@ def brewcheck [] {
     cm-source-update
 }
 
-alias bt = nu ~/.config/nushell/analysis/brewtrend/brewtrend.nu
+alias bt = nu ~/.config/analysis/brewtrend/brewtrend.nu
 
 # STARSHIP
 mkdir ($nu.data-dir | path join "vendor/autoload")

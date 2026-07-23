@@ -4,7 +4,7 @@
 # and displays the results in VisiData.
 
 # --- Configuration ---
-$env.BREWTREND_DIR = "/Users/hugh/.config/nushell/analysis/brewtrend"
+$env.BREWTREND_DIR = "/Users/hugh/.config/analysis/brewtrend"
 $env.DATA_DIR = $"($env.BREWTREND_DIR)/data"
 $env.MODELS_DIR = $"($env.BREWTREND_DIR)/models"
 $env.DB_PATH = $"($env.DATA_DIR)/trends.db"
