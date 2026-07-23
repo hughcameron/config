@@ -14,7 +14,7 @@
 # The OAuth token is never printed.
 set -uo pipefail
 
-DATA_DIR="${HOME}/.config/nushell/analysis/claude-usage/data"
+DATA_DIR="${HOME}/.config/analysis/claude-usage/data"
 CACHE="${DATA_DIR}/usage-api.json"
 HISTORY="${DATA_DIR}/usage-log.jsonl"
 KEYCHAIN_SERVICE="Claude Code-credentials"

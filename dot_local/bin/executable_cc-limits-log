@@ -13,7 +13,7 @@
 set -euo pipefail
 
 MIN_INTERVAL=120
-data_dir="${HOME}/.config/nushell/analysis/claude-usage/data"
+data_dir="${HOME}/.config/analysis/claude-usage/data"
 log="${data_dir}/limits-log.jsonl"
 stamp="${data_dir}/.limits-log.last"
 

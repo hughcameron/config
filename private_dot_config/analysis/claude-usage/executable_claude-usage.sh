@@ -7,7 +7,7 @@
 set -uo pipefail
 
 # --- Configuration ---
-CLAUDE_USAGE_DIR="${HOME}/.config/nushell/analysis/claude-usage"
+CLAUDE_USAGE_DIR="${HOME}/.config/analysis/claude-usage"
 DATA_DIR="${CLAUDE_USAGE_DIR}/data"
 MODELS_DIR="${CLAUDE_USAGE_DIR}/models"
 DB_PATH="${DATA_DIR}/usage.db"
