@@ -6,6 +6,14 @@ bindkey -e
 # Custom completions
 fpath=(~/.zsh/completions $fpath)
 
+# z-async: zsh-autocomplete's async engine. Upstream ships it as a git submodule,
+# but Homebrew builds from the GitHub source tarball, which excludes submodules —
+# so the brew package is missing share/zsh-autocomplete/z-async entirely. Without
+# it, every prompt errors with "z-async: function definition file not found" and
+# live completion silently never runs. Cloned separately by
+# run_onchange_install-z-async.sh; prepending here lets autoload find it.
+[[ -d ~/.local/share/z-async ]] && fpath=(~/.local/share/z-async $fpath)
+
 # zsh-autocomplete: real-time type-ahead completion (replaces manual compinit)
 # Must be sourced before any compdef calls (e.g. carapace)
 if [[ -f /opt/homebrew/share/zsh-autocomplete/zsh-autocomplete.plugin.zsh ]]; then
