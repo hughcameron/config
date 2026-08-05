@@ -57,6 +57,15 @@ docker system prune -af --volumes
 # docker: clear buildx build cache (often the biggest hog)
 docker buildx prune -af
 
+# docker (macOS): real on-disk size of the Desktop VM image (sparse — du is truthful, ls is not)
+du -sh ~/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw
+
+# docker (macOS): audit every Docker Desktop leftover, app installed or not
+du -sh ~/Library/Containers/com.docker.docker ~/Library/Group\ Containers/group.com.docker ~/Library/Application\ Support/Docker\ Desktop ~/.docker 2>/dev/null
+
+# docker (macOS): purge leftovers orphaned by uninstalling the app — destroys ALL images and volumes; a 4K SIP-protected stub survives
+rm -rf ~/Library/Containers/com.docker.docker ~/Library/Group\ Containers/group.com.docker ~/Library/Application\ Support/Docker\ Desktop ~/.docker 2>/dev/null; sudo find /usr/local/bin -maxdepth 1 -lname '/Applications/Docker.app/*' -delete
+
 # CDK: remove synth output (regenerates on next `cdk synth`/`cdk deploy`)
 rm -rf <cdk_dir>/cdk.out
 
