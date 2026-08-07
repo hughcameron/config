@@ -38,6 +38,20 @@ lab() {
     fi
 }
 
+# Mark a PR ready for review, then squash-merge it.
+# Usage: gs [<number> | <url> | <branch>] [extra `gh pr merge` flags...]
+# With no PR ref, acts on the current branch's PR. `gh pr ready` on an
+# already-open PR just warns and exits 0, so this is safe on non-drafts.
+gs() {
+    local -a ref
+    if [[ -n "$1" && "$1" != -* ]]; then
+        ref=("$1")
+        shift
+    fi
+    gh pr ready "${ref[@]}" || return
+    gh pr merge --squash "${ref[@]}" "$@"
+}
+
 # fzf picker for tmux sessions: switch (inside tmux) or attach (outside).
 ta() {
     local session
