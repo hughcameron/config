@@ -27,9 +27,21 @@ return {
     local actions = require("diffview.actions")
 
     return {
-      -- Upstream defaults already give the side-by-side `diff2_horizontal`
-      -- layout and `--follow` across renames; only highlighting needs raising.
+      -- Upstream defaults already give `--follow` across renames; only the
+      -- highlighting and the geometry below need changing.
       enhanced_diff_hl = true,
+      view = {
+        -- Old above, new below — reads closer to a unified diff than the
+        -- default side-by-side. diffview can't do a genuinely *inline* diff:
+        -- file_history_view only offers diff2_horizontal and diff2_vertical
+        -- (diff1_plain is merge_tool-only), because nvim's diff mode is
+        -- inherently two-window. For a real inline diff, see `<leader>gf`.
+        file_history = { layout = "diff2_vertical" },
+      },
+      -- Commit list on the right, the diff stack on the left.
+      file_history_panel = {
+        win_config = { position = "right", width = 50 },
+      },
       keymaps = {
         file_history_panel = {
           -- Out of the box `j`/`k` only move the cursor — you then have to
