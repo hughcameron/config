@@ -26,24 +26,46 @@ return {
   opts = function()
     local actions = require("diffview.actions")
 
-    -- Horizontal scroll is a *window* property, and diffview swaps new
-    -- buffers into the same two windows on every step, so `leftcol` snaps
-    -- back to 0 each time — you lose your place in a wide table on every
-    -- j/k. Remember the last scroll position and restore it as each new
-    -- diff buffer lands. `col` rides along because Vim clamps `leftcol` to
-    -- keep the cursor on screen, so restoring one without the other is a
-    -- no-op.
-    local scroll = { leftcol = 0, col = 0 }
+    -- Scroll position is a *window* property, and diffview swaps new buffers
+    -- into the same two windows on every step, so the view snaps back to the
+    -- top-left each time — you lose your place on every j/k. Remember where
+    -- the panes were and restore it as each new diff buffer lands.
+    --
+    -- `col` rides along with `leftcol` because Vim clamps `leftcol` to keep
+    -- the cursor on screen, and `lnum` rides along with `topline` for the
+    -- same reason: restoring either one alone is a no-op.
+    local scroll = { leftcol = 0, col = 0, topline = 0, lnum = 0 }
+
+    -- >0 while diffview is repositioning after a step. Its cursor work fires
+    -- WinScrolled, which would otherwise overwrite the position we're about
+    -- to restore with the reset one — the restore would then be a no-op.
+    local suppress = 0
+    local syncing = false
+
+    local function is_pane(win)
+      if not (win and vim.api.nvim_win_is_valid(win)) then return false end
+      local ok, tagged = pcall(vim.api.nvim_win_get_var, win, "hc_diffview_pane")
+      return ok and tagged == true
+    end
 
     vim.api.nvim_create_autocmd("WinScrolled", {
       group = vim.api.nvim_create_augroup("hc_diffview_scroll", { clear = true }),
-      callback = function()
-        local win = vim.api.nvim_get_current_win()
-        local tagged, is_pane = pcall(vim.api.nvim_win_get_var, win, "hc_diffview_pane")
-        if tagged and is_pane then
-          local v = vim.fn.winsaveview()
-          scroll.leftcol, scroll.col = v.leftcol, v.col
-        end
+      callback = function(args)
+        if suppress > 0 or syncing then return end
+        local win = tonumber(args.match)
+        if not is_pane(win) then return end
+
+        local v = vim.api.nvim_win_call(win, vim.fn.winsaveview)
+        scroll.leftcol, scroll.col = v.leftcol, v.col
+        scroll.topline, scroll.lnum = v.topline, v.lnum
+
+        -- 'scrollbind' only fires for scrolls of the *current* window, so a
+        -- mouse wheel over a pane moves it alone and the two sides drift
+        -- apart. :syncbind pulls the others back in line with whichever
+        -- window actually scrolled.
+        syncing = true
+        pcall(vim.api.nvim_win_call, win, function() vim.cmd("syncbind") end)
+        syncing = false
       end,
     })
 
@@ -110,20 +132,25 @@ return {
           -- nothing and lets the cursor sit past end-of-line instead.
           vim.wo[winid].virtualedit = "all"
 
-          if scroll.leftcol > 0 then
-            -- Deferred: diffview repositions the cursor *after* this hook
-            -- returns, which resets the view. Restoring inline measures as
-            -- applied and is then silently undone.
-            vim.schedule(function()
-              if not vim.api.nvim_win_is_valid(winid) then return end
+          -- Deferred: diffview repositions the cursor *after* this hook
+          -- returns, which resets the view. Restoring inline measures as
+          -- applied and is then silently undone.
+          suppress = suppress + 1
+          vim.schedule(function()
+            if vim.api.nvim_win_is_valid(winid) and (scroll.topline > 0 or scroll.leftcol > 0) then
               vim.api.nvim_win_call(winid, function()
+                -- A shorter file at this revision can't honour the old line.
+                local last = vim.api.nvim_buf_line_count(0)
                 vim.fn.winrestview({
+                  topline = math.min(scroll.topline, last),
+                  lnum = math.min(math.max(scroll.lnum, 1), last),
                   leftcol = scroll.leftcol,
                   col = math.max(scroll.col, scroll.leftcol),
                 })
               end)
-            end)
-          end
+            end
+            suppress = suppress - 1
+          end)
 
           set_commit_winbar(winid, ctx)
         end,
