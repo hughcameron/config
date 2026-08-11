@@ -36,7 +36,19 @@ return {
         -- file_history_view only offers diff2_horizontal and diff2_vertical
         -- (diff1_plain is merge_tool-only), because nvim's diff mode is
         -- inherently two-window. For a real inline diff, see `<leader>gf`.
-        file_history = { layout = "diff2_vertical" },
+        --
+        -- winbar_info labels each pane with the revision it holds, so the
+        -- top (before) and bottom (after) are told apart at a glance.
+        file_history = { layout = "diff2_vertical", winbar_info = true },
+      },
+      hooks = {
+        -- diffview opens diff buffers with foldmethod=diff / foldlevel=0
+        -- (vcs/file.lua), so every unchanged region collapses and the file
+        -- reads as fragments around the hunks. Turn folding off to render
+        -- the whole file in both panes; `zi` toggles it back per window.
+        diff_buf_win_enter = function(_, winid)
+          vim.wo[winid].foldenable = false
+        end,
       },
       -- Commit list on the right, the diff stack on the left.
       file_history_panel = {
