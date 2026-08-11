@@ -31,15 +31,15 @@ return {
       -- highlighting and the geometry below need changing.
       enhanced_diff_hl = true,
       view = {
-        -- Old above, new below — reads closer to a unified diff than the
-        -- default side-by-side. diffview can't do a genuinely *inline* diff:
-        -- file_history_view only offers diff2_horizontal and diff2_vertical
-        -- (diff1_plain is merge_tool-only), because nvim's diff mode is
-        -- inherently two-window. For a real inline diff, see `<leader>gf`.
+        -- Three columns: old | new | commit history. diffview can't do a
+        -- genuinely *inline* diff — file_history_view offers only
+        -- diff2_horizontal and diff2_vertical (diff1_plain is merge_tool
+        -- only), because nvim's diff mode is inherently two-window. For a
+        -- real inline diff, see `<leader>gf`.
         --
-        -- winbar_info labels each pane with the revision it holds, so the
-        -- top (before) and bottom (after) are told apart at a glance.
-        file_history = { layout = "diff2_vertical", winbar_info = true },
+        -- winbar_info labels each pane with the revision it holds, so old
+        -- (left) and new (right) are told apart at a glance.
+        file_history = { layout = "diff2_horizontal", winbar_info = true },
       },
       hooks = {
         -- diffview opens diff buffers with foldmethod=diff / foldlevel=0
@@ -50,7 +50,7 @@ return {
           vim.wo[winid].foldenable = false
         end,
       },
-      -- Commit list on the right, the diff stack on the left.
+      -- Commit list as the third column, on the right of the two diff panes.
       file_history_panel = {
         win_config = { position = "right", width = 50 },
       },
