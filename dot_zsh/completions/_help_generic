@@ -1,0 +1,145 @@
+# _help_generic — complete a command from its own --help output.
+#
+# Zsh's fallback for a command it doesn't know is _files, so anything without a
+# completion function offers filenames even where the command wants a
+# subcommand. This asks the command instead: it walks the subcommand path
+# already on the line, runs `cmd <path> --help`, and pulls the "Commands:" and
+# "Options:" sections out of the result. clap, cobra, click and argparse all
+# print that shape, and there's a loose mode for GNU/BSD tools that just list
+# flags under no heading at all.
+#
+# Parses are cached under $XDG_CACHE_HOME keyed on the binary's mtime, because
+# zsh-autocomplete re-completes on every keystroke and a cold parse costs a
+# process spawn. A new build of the binary invalidates its whole cache.
+#
+# Register per command with `compdef _help_generic <cmd>`, or as the fallback
+# for every unknown command with `compdef _help_generic -default-`.
+#
+# Styles:
+#   zstyle ':completion:*' help-deny  cmd cmd ...   # never run these for help
+#   zstyle ':completion:*' help-flags --help -h     # help flags to try, in order
+
+local cmd=${words[1]:t}
+local bin=${commands[${words[1]}]}
+
+# Only ever run a real executable found on PATH. Shell functions, aliases and
+# scripts reached by relative path are not worth speculatively executing.
+if [[ -z $bin || ! -x $bin ]]; then
+    _default "$@"
+    return
+fi
+
+local -a deny
+zstyle -a ":completion:${curcontext}:" help-deny deny ||
+    deny=(sudo doas su env nohup xargs watch time nice command exec)
+if (( $deny[(I)$cmd] )); then
+    _default "$@"
+    return
+fi
+
+local -a help_flags
+zstyle -a ":completion:${curcontext}:" help-flags help_flags ||
+    help_flags=(--help -h)
+
+zmodload -F zsh/stat b:zstat 2>/dev/null
+zmodload -F zsh/parameter p:functions_source 2>/dev/null
+
+# functions_source is only populated once this function has been loaded, which
+# it has by the time the body runs. Guard anyway — without zsh/parameter the
+# subscript below would be read as a math expression.
+local _hg_awk=${${functions_source-}[_help_generic]:-$HOME/.zsh/completions/_help_generic}
+_hg_awk=${_hg_awk:h}/help-parse.awk
+[[ -r $_hg_awk ]] || { _default "$@"; return }
+
+# Parse one level of help into _hg_cmds / _hg_cmdnames / _hg_opts.
+# $1 is the binary, the rest is the subcommand path leading to this level.
+_help_generic_parse() {
+    local exe=$1
+    shift
+    local -a subpath=("$@")
+
+    # Assigning without -g reaches the caller's locals, which is the intent.
+    _hg_cmds=() _hg_cmdnames=() _hg_opts=()
+
+    local -a st
+    zstat -A st +mtime -- $exe 2>/dev/null || st=(0)
+
+    # Cache is keyed on the binary's mtime, so a new build invalidates every
+    # level of it at once. The parser's tab-separated output is stored as-is.
+    local key=${${(j:_:)subpath}//[^A-Za-z0-9_]/-}
+    local dir=${XDG_CACHE_HOME:-$HOME/.cache}/zsh/help-completion/${cmd//[^A-Za-z0-9_]/-}
+    local cache=$dir/$st[1]/${key:-_root}.tsv
+
+    # Unquoted array assignment so (f) splitting drops empty lines — an empty
+    # parse must stay a zero-length array for the loose retry below to trigger.
+    local -a parsed
+    if [[ -r $cache ]]; then
+        parsed=(${(f)"$(<$cache)"})
+    else
+        local help_text= flag=
+        for flag in $help_flags; do
+            help_text=$(command $exe $subpath $flag 2>&1 </dev/null)
+            [[ -n $help_text ]] && break
+        done
+        if [[ -n $help_text ]]; then
+            parsed=(${(f)"$(print -r -- $help_text | command awk -f $_hg_awk)"})
+            (( $#parsed )) ||
+                parsed=(${(f)"$(print -r -- $help_text | command awk -v loose=1 -f $_hg_awk)"})
+        fi
+
+        # Drop caches left behind by older builds, then record this one — even
+        # when empty, so a command with unparseable help isn't re-run forever.
+        local d
+        for d in $dir/*(N/); do
+            [[ $d:t == $st[1] ]] || command rm -rf -- $d
+        done
+        command mkdir -p ${cache:h} 2>/dev/null &&
+            print -rl -- $parsed >| $cache 2>/dev/null
+    fi
+
+    local -a f
+    local line
+    for line in $parsed; do
+        [[ -n $line ]] || continue
+        f=("${(@ps:\t:)line}")
+        case $f[1] in
+            cmd) _hg_cmdnames+=($f[2]); _hg_cmds+=("$f[2]${f[3]:+:$f[3]}") ;;
+            opt) _hg_opts+=("$f[2]${f[3]:+:$f[3]}") ;;
+        esac
+    done
+}
+
+# Walk the subcommand path already typed, one confirmed level at a time, so
+# `cmd sub sub2 <TAB>` completes against `cmd sub sub2 --help`. Words that the
+# parent's help never listed are treated as arguments, not subcommands.
+local -a subpath=()
+local -a _hg_cmds _hg_cmdnames _hg_opts
+local i=2 w advanced
+
+while :; do
+    _help_generic_parse $bin $subpath
+    advanced=0
+    while (( i < CURRENT )); do
+        w=$words[i]
+        (( i++ ))
+        [[ $w == -* ]] && continue
+        if (( $_hg_cmdnames[(I)$w] )); then
+            subpath+=($w)
+            advanced=1
+            break
+        fi
+    done
+    (( advanced )) || break
+done
+
+local ret=1
+(( $#_hg_cmds )) && { _describe -t help-commands 'command' _hg_cmds && ret=0 }
+(( $#_hg_opts )) && { _describe -t help-options 'option' _hg_opts && ret=0 }
+
+# Offer files where the command has no subcommands left to suggest, or where
+# what's typed is already clearly a path.
+if [[ $PREFIX != -* ]] && { (( ! $#_hg_cmds )) || [[ $PREFIX == */* ]] }; then
+    _files && ret=0
+fi
+
+return ret

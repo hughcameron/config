@@ -39,3 +39,11 @@ eval "$(fzf --zsh)"
 
 # Carapace completions
 command -v carapace &>/dev/null && eval "$(carapace _carapace zsh)"
+
+# Last-resort completion: ask the command what it supports. Anything with no
+# completion function of its own and no carapace spec would otherwise fall
+# through to bare filenames, even where it wants a subcommand — this parses
+# `cmd --help` for its subcommands and flags instead. Must come after carapace
+# so real specs still win. See ~/.zsh/completions/_help_generic.
+autoload -Uz _help_generic
+compdef _help_generic -default-
