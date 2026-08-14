@@ -1,0 +1,33 @@
+% markdown, md-wrap, hard wrapping, prose, reflow
+
+# Check a path for hard-wrapped prose (recursive; exit 1 if any found)
+md-wrap check <path>
+
+# Check, skipping generated markdown (session digests, logs)
+md-wrap check <path> --exclude '*/sessions/*' --exclude '*/log/*'
+
+# Check just the agent instruction surface — where the habit usually starts
+md-wrap check <path>/CLAUDE.md <path>/.claude
+
+# List the offending files only, no counts (pipes into other commands)
+md-wrap check <path> -q
+
+# Preview the reflow as a unified diff, writing nothing
+md-wrap diff <path>
+
+# Preview the reflow for one file
+md-wrap diff <file>
+
+# Unwrap in place: one line per paragraph
+md-wrap fix <path>
+
+# Unwrap one file in place
+md-wrap fix <file>
+
+# Treat a different wrap column as hard wrapping (default 40-100)
+md-wrap check <path> --min <min_col> --max <max_col>
+
+$ path: ls -d */ 2>/dev/null; echo .
+$ file: fd -e md --max-depth 3 2>/dev/null || find . -maxdepth 3 -name '*.md' -not -path '*/.git/*'
+$ min_col: echo "40\n50\n60\n72"
+$ max_col: echo "72\n80\n100\n120"

@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# md-wrap — find and unwrap hard-wrapped prose in markdown files.
+#
+# Hard wrapping (breaking a paragraph at a fixed column) costs the same bytes as
+# one line per paragraph, renders as visible line breaks in Obsidian when
+# "Strict line breaks" is off, and makes every edit re-flow lines that didn't
+# change. This finds it and undoes it.
+#
+# Usage:
+#   md-wrap check [paths...]        Report files with hard-wrapped paragraphs
+#   md-wrap diff  [paths...]        Show what fix would change; write nothing
+#   md-wrap fix   [paths...]        Rewrite in place: one line per paragraph
+#
+# Paths may be files, directories (searched recursively for *.md), or globs.
+# Defaults to the current directory.
+#
+# Options:
+#   --min N     Shortest line that counts as wrapped (default 40)
+#   --max N     Longest  line that counts as wrapped (default 100)
+#   --exclude G Skip paths matching glob G; repeatable. Generated markdown is
+#               the usual case: --exclude '*/sessions/*' --exclude '*/log/*'
+#   -q          check: print only the file list, no counts
+#
+# A paragraph is hard-wrapped when it spans 2+ lines and every line but the last
+# is between --min and --max characters. Frontmatter, fenced code, tables,
+# headings, list items, blockquotes, indented blocks, and explicit markdown line
+# breaks (two trailing spaces, or a trailing backslash) are left untouched.
+#
+# Exit status: 0 clean, 1 hard wrapping found (check/diff), 2 usage error.
+
+set -euo pipefail
+
+MIN=40
+MAX=100
+QUIET=0
+MODE=""
+PATHS=()
+EXCLUDES=()
+
+usage() { sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; }
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    check|diff|fix) MODE="$1"; shift ;;
+    --min) MIN="${2:?--min needs a number}"; shift 2 ;;
+    --max) MAX="${2:?--max needs a number}"; shift 2 ;;
+    --exclude) EXCLUDES+=("${2:?--exclude needs a glob}"); shift 2 ;;
+    -q|--quiet) QUIET=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    --) shift; PATHS+=("$@"); break ;;
+    -*) echo "md-wrap: unknown option $1" >&2; exit 2 ;;
+    *) PATHS+=("$1"); shift ;;
+  esac
+done
+
+[ -n "$MODE" ] || { usage; exit 2; }
+[ "${#PATHS[@]}" -gt 0 ] || PATHS=(.)
+
+excluded() {
+  local f="$1" g
+  for g in ${EXCLUDES+"${EXCLUDES[@]}"}; do
+    # shellcheck disable=SC2053
+    [[ "$f" == $g ]] && return 0
+  done
+  return 1
+}
+
+# Collect the file list: directories are searched recursively, everything else
+# is taken as given so shell globs and explicit filenames both work.
+FILES=()
+for p in "${PATHS[@]}"; do
+  if [ -d "$p" ]; then
+    while IFS= read -r f; do
+      excluded "$f" || FILES+=("$f")
+    done < <(
+      find "$p" -type f -name '*.md' \
+        -not -path '*/.git/*' -not -path '*/node_modules/*' | sort
+    )
+  elif [ -f "$p" ]; then
+    excluded "$p" || FILES+=("$p")
+  fi
+done
+
+[ "${#FILES[@]}" -gt 0 ] || { echo "md-wrap: no markdown files found" >&2; exit 2; }
+
+# One classifier, shared by every mode. Buffers the file, reflows the paragraphs
+# it judges hard-wrapped, and reports the count on stderr as "<n> <maxcol>".
+reflow() {
+  awk -v MIN="$MIN" -v MAX="$MAX" '
+    function flush(   i, ok, m, joined) {
+      if (n == 0) return
+      ok = (n >= 2)
+      m = 0
+      for (i = 1; ok && i < n; i++) {
+        if (length(P[i]) < MIN || length(P[i]) > MAX || BRK[i]) ok = 0
+        else if (length(P[i]) > m) m = length(P[i])
+      }
+      if (ok) {
+        joined = P[1]
+        for (i = 2; i <= n; i++) joined = joined " " P[i]
+        print joined
+        wrapped++
+        if (m > col) col = m
+      } else {
+        for (i = 1; i <= n; i++) print P[i]
+      }
+      n = 0
+    }
+    BEGIN { fm = 0; fence = 0; n = 0; wrapped = 0; col = 0 }
+    NR == 1 && $0 == "---" { fm = 1; print; next }
+    fm { if ($0 == "---") fm = 0; print; next }
+    /^[ \t]*(```|~~~)/ { fence = !fence; flush(); print; next }
+    fence { print; next }
+    /^[ \t]*$/ { flush(); print; next }
+    # Block constructs that own their own line breaks.
+    /^[ \t]*([#|>*+=<-]|[0-9]+[.)])/ { flush(); print; next }
+    /^([ ]{4,}|\t)/ { flush(); print; next }
+    {
+      n++
+      P[n] = $0
+      # Explicit markdown line break: two trailing spaces, or a trailing backslash.
+      BRK[n] = ($0 ~ /(  +|\\)$/)
+    }
+    END { flush(); printf "%d %d\n", wrapped, col > "/dev/stderr" }
+  ' "$1"
+}
+
+status=0
+total=0
+
+for f in "${FILES[@]}"; do
+  tmp="$(mktemp)"
+  # stderr carries the count; stdout carries the reflowed file.
+  counts="$(reflow "$f" 2>&1 >"$tmp" || true)"
+  # shellcheck disable=SC2086  # deliberate split of "<wrapped> <maxcol>"
+  set -- $counts
+  wrapped="${1:-0}"
+  col="${2:-0}"
+
+  if [ "$wrapped" -eq 0 ]; then rm -f "$tmp"; continue; fi
+
+  status=1
+  total=$((total + wrapped))
+
+  case "$MODE" in
+    check)
+      if [ "$QUIET" -eq 1 ]; then echo "$f"
+      else printf '%5d paragraph(s)  wrapped at <=%3d  %s\n' "$wrapped" "$col" "$f"
+      fi
+      rm -f "$tmp"
+      ;;
+    diff)
+      printf '\n=== %s (%d paragraph(s), wrapped at <=%d)\n' "$f" "$wrapped" "$col"
+      diff -u "$f" "$tmp" | tail -n +3 || true
+      rm -f "$tmp"
+      ;;
+    fix)
+      cat "$tmp" >"$f"
+      rm -f "$tmp"
+      printf 'unwrapped %5d paragraph(s)  %s\n' "$wrapped" "$f"
+      ;;
+  esac
+done
+
+if [ "$status" -eq 0 ]; then
+  echo "md-wrap: no hard-wrapped paragraphs in ${#FILES[@]} file(s)"
+else
+  printf 'md-wrap: %d paragraph(s) across %d file(s) scanned\n' "$total" "${#FILES[@]}" >&2
+fi
+
+# fix always succeeds; check and diff report the finding through exit status.
+[ "$MODE" = "fix" ] && exit 0
+exit "$status"
