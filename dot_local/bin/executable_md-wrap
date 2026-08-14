@@ -16,7 +16,11 @@
 #
 # Options:
 #   --min N     Shortest line that counts as wrapped (default 40)
-#   --max N     Longest  line that counts as wrapped (default 100)
+#   --max N     Longest  line that counts as wrapped (default 120). This sits
+#               above the usual wrap columns on purpose: a wrapper set to 100
+#               overshoots by a few characters rather than break a long link,
+#               and the line it overshoots on is often the one carrying the
+#               list marker, which would take its whole item out of the count.
 #   --exclude G Skip paths matching glob G; repeatable. Generated or vendored
 #               trees are the usual case: --exclude '*/generated/*'
 #   --color W   always | never | auto (default). auto colours diff output when
@@ -37,14 +41,14 @@
 set -euo pipefail
 
 MIN=40
-MAX=100
+MAX=120
 QUIET=0
 COLOR=auto
 MODE=""
 PATHS=()
 EXCLUDES=()
 
-usage() { sed -n '2,35p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,39p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
