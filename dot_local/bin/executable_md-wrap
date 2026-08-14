@@ -17,8 +17,8 @@
 # Options:
 #   --min N     Shortest line that counts as wrapped (default 40)
 #   --max N     Longest  line that counts as wrapped (default 100)
-#   --exclude G Skip paths matching glob G; repeatable. Generated markdown is
-#               the usual case: --exclude '*/sessions/*' --exclude '*/log/*'
+#   --exclude G Skip paths matching glob G; repeatable. Generated or vendored
+#               trees are the usual case: --exclude '*/generated/*'
 #   -q          check: print only the file list, no counts
 #
 # A paragraph is hard-wrapped when it spans 2+ lines and every line but the last

@@ -1,13 +1,13 @@
 % markdown, md-wrap, hard wrapping, prose, reflow
 
-# Check a path for hard-wrapped prose (recursive; exit 1 if any found)
+# Check a directory for hard-wrapped prose (recursive; exit 1 if any found)
 md-wrap check <path>
 
-# Check, skipping generated markdown (session digests, logs)
-md-wrap check <path> --exclude '*/sessions/*' --exclude '*/log/*'
+# Check a single file
+md-wrap check <file>
 
-# Check just the agent instruction surface — where the habit usually starts
-md-wrap check <path>/CLAUDE.md <path>/.claude
+# Check, skipping a generated or vendored tree
+md-wrap check <path> --exclude '<exclude_pattern>'
 
 # List the offending files only, no counts (pipes into other commands)
 md-wrap check <path> -q
@@ -29,5 +29,6 @@ md-wrap check <path> --min <min_col> --max <max_col>
 
 $ path: ls -d */ 2>/dev/null; echo .
 $ file: fd -e md --max-depth 3 2>/dev/null || find . -maxdepth 3 -name '*.md' -not -path '*/.git/*'
-$ min_col: echo "40\n50\n60\n72"
-$ max_col: echo "72\n80\n100\n120"
+$ exclude_pattern: printf '%s\n' '*/generated/*' '*/vendor/*' '*/node_modules/*' '*/build/*' '*/.venv/*'
+$ min_col: printf '%s\n' 40 50 60 72
+$ max_col: printf '%s\n' 72 80 100 120
