@@ -19,6 +19,9 @@
 #   --max N     Longest  line that counts as wrapped (default 100)
 #   --exclude G Skip paths matching glob G; repeatable. Generated or vendored
 #               trees are the usual case: --exclude '*/generated/*'
+#   --color W   always | never | auto (default). auto colours diff output when
+#               stdout is a terminal and NO_COLOR is unset. Uses GNU diff's own
+#               --color, else delta, colordiff or bat, whichever is installed.
 #   -q          check: print only the file list, no counts
 #
 # A paragraph is hard-wrapped when it spans 2+ lines and every line but the last
@@ -33,11 +36,12 @@ set -euo pipefail
 MIN=40
 MAX=100
 QUIET=0
+COLOR=auto
 MODE=""
 PATHS=()
 EXCLUDES=()
 
-usage() { sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -45,6 +49,7 @@ while [ $# -gt 0 ]; do
     --min) MIN="${2:?--min needs a number}"; shift 2 ;;
     --max) MAX="${2:?--max needs a number}"; shift 2 ;;
     --exclude) EXCLUDES+=("${2:?--exclude needs a glob}"); shift 2 ;;
+    --color) COLOR="${2:?--color needs always|never|auto}"; shift 2 ;;
     -q|--quiet) QUIET=1; shift ;;
     -h|--help) usage; exit 0 ;;
     --) shift; PATHS+=("$@"); break ;;
@@ -83,21 +88,63 @@ done
 
 [ "${#FILES[@]}" -gt 0 ] || { echo "md-wrap: no markdown files found" >&2; exit 2; }
 
+# Colour, decided once. auto defers to the terminal and to NO_COLOR; GNU diff
+# colours its own output, otherwise pipe through whichever tool is installed.
+case "$COLOR" in
+  always) want_color=1 ;;
+  never)  want_color=0 ;;
+  auto)   { [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; } && want_color=1 || want_color=0 ;;
+  *) echo "md-wrap: --color takes always, never or auto" >&2; exit 2 ;;
+esac
+
+DIFF_OPTS=()
+DIFF_PIPE=""
+if [ "$want_color" -eq 1 ]; then
+  if diff --color=always -u /dev/null /dev/null >/dev/null 2>&1; then
+    DIFF_OPTS=(--color=always)
+  elif command -v delta >/dev/null 2>&1; then DIFF_PIPE="delta"
+  elif command -v colordiff >/dev/null 2>&1; then DIFF_PIPE="colordiff"
+  elif command -v bat >/dev/null 2>&1; then
+    DIFF_PIPE="bat -l diff --color=always --style=plain --paging=never"
+  fi
+fi
+
+show_diff() {  # $1 file on disk, $2 reflowed copy
+  if [ -n "$DIFF_PIPE" ]; then
+    diff -u --label "$1" --label "$1 (reflowed)" "$1" "$2" | $DIFF_PIPE || true
+  else
+    diff ${DIFF_OPTS+"${DIFF_OPTS[@]}"} -u \
+      --label "$1" --label "$1 (reflowed)" "$1" "$2" || true
+  fi
+}
+
 # One classifier, shared by every mode. Buffers the file, reflows the paragraphs
 # it judges hard-wrapped, and reports the count on stderr as "<n> <maxcol>".
 reflow() {
   awk -v MIN="$MIN" -v MAX="$MAX" '
-    function flush(   i, ok, m, joined) {
+    # Leading whitespace of a line, "" when it starts in column 1.
+    function indent(s,   t) { t = s; sub(/[^ \t].*$/, "", t); return t }
+    function flush(   i, ok, m, joined, body, ind) {
       if (n == 0) return
       ok = (n >= 2)
       m = 0
+      # A continuation block keeps its own indent, so every line has to sit at
+      # the same one: a change of indent is a change of structure, not a wrap.
+      ind = indent(P[1])
+      for (i = 1; ok && i <= n; i++) if (indent(P[i]) != ind) ok = 0
       for (i = 1; ok && i < n; i++) {
         if (length(P[i]) < MIN || length(P[i]) > MAX || BRK[i]) ok = 0
         else if (length(P[i]) > m) m = length(P[i])
       }
       if (ok) {
+        # Keep the block indent once, on the joined line; every continuation
+        # sheds its own, or it lands as a run of spaces mid-sentence.
         joined = P[1]
-        for (i = 2; i <= n; i++) joined = joined " " P[i]
+        for (i = 2; i <= n; i++) {
+          body = P[i]
+          sub(/^[ \t]+/, "", body)
+          joined = joined " " body
+        }
         print joined
         wrapped++
         if (m > col) col = m
@@ -112,8 +159,14 @@ reflow() {
     /^[ \t]*(```|~~~)/ { fence = !fence; flush(); print; next }
     fence { print; next }
     /^[ \t]*$/ { flush(); print; next }
-    # Block constructs that own their own line breaks.
-    /^[ \t]*([#|>*+=<-]|[0-9]+[.)])/ { flush(); print; next }
+    # Block constructs that own their own line breaks. A marker only counts
+    # when whitespace follows it, so *emphasis* opening a line stays prose.
+    /^[ \t]*#{1,6}([ \t]|$)/ { flush(); print; next }
+    /^[ \t]*[|>]/ { flush(); print; next }
+    /^[ \t]*[-*+][ \t]/ { flush(); print; next }
+    /^[ \t]*[0-9]+[.)][ \t]/ { flush(); print; next }
+    /^[ \t]*(=+|-+|([-*_][ \t]*){3,})[ \t]*$/ { flush(); print; next }
+    /^[ \t]*</ { flush(); print; next }
     /^([ ]{4,}|\t)/ { flush(); print; next }
     {
       n++
@@ -150,8 +203,8 @@ for f in "${FILES[@]}"; do
       rm -f "$tmp"
       ;;
     diff)
-      printf '\n=== %s (%d paragraph(s), wrapped at <=%d)\n' "$f" "$wrapped" "$col"
-      diff -u "$f" "$tmp" | tail -n +3 || true
+      printf '\n=== %d paragraph(s), wrapped at <=%d\n' "$wrapped" "$col"
+      show_diff "$f" "$tmp"
       rm -f "$tmp"
       ;;
     fix)

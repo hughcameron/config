@@ -18,6 +18,9 @@ md-wrap diff <path>
 # Preview the reflow for one file
 md-wrap diff <file>
 
+# Preview in colour through a pager (colour is automatic on a terminal)
+md-wrap diff <path> --color always | less -R
+
 # Unwrap in place: one line per paragraph
 md-wrap fix <path>
 
