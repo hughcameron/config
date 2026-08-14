@@ -26,8 +26,11 @@
 #
 # A paragraph is hard-wrapped when it spans 2+ lines and every line but the last
 # is between --min and --max characters. Frontmatter, fenced code, tables,
-# headings, list items, blockquotes, indented blocks, and explicit markdown line
-# breaks (two trailing spaces, or a trailing backslash) are left untouched.
+# headings, blockquotes, indented blocks and explicit markdown line breaks (two
+# trailing spaces, or a trailing backslash) are left untouched.
+#
+# A list item is one paragraph: its continuations join back onto the marker
+# line, and a nested item joins onto its own marker rather than its parent's.
 #
 # Exit status: 0 clean, 1 hard wrapping found (check/diff), 2 usage error.
 
@@ -41,7 +44,7 @@ MODE=""
 PATHS=()
 EXCLUDES=()
 
-usage() { sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,35p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -124,14 +127,19 @@ reflow() {
   awk -v MIN="$MIN" -v MAX="$MAX" '
     # Leading whitespace of a line, "" when it starts in column 1.
     function indent(s,   t) { t = s; sub(/[^ \t].*$/, "", t); return t }
-    function flush(   i, ok, m, joined, body, ind) {
+    function indlen(s) { return length(indent(s)) }
+    function flush(   i, ok, m, joined, body, ind, first) {
       if (n == 0) return
       ok = (n >= 2)
       m = 0
-      # A continuation block keeps its own indent, so every line has to sit at
-      # the same one: a change of indent is a change of structure, not a wrap.
-      ind = indent(P[1])
-      for (i = 1; ok && i <= n; i++) if (indent(P[i]) != ind) ok = 0
+      # Every line has to sit at one indent: a change of indent is a change of
+      # structure, not a wrap. A list item sets its own on the marker line, so
+      # there the rule starts from the first continuation instead.
+      first = lmark ? 2 : 1
+      if (ok && n >= first) {
+        ind = indent(P[first])
+        for (i = first; ok && i <= n; i++) if (indent(P[i]) != ind) ok = 0
+      }
       for (i = 1; ok && i < n; i++) {
         if (length(P[i]) < MIN || length(P[i]) > MAX || BRK[i]) ok = 0
         else if (length(P[i]) > m) m = length(P[i])
@@ -151,9 +159,9 @@ reflow() {
       } else {
         for (i = 1; i <= n; i++) print P[i]
       }
-      n = 0
+      n = 0; lmark = 0; lind = 0
     }
-    BEGIN { fm = 0; fence = 0; n = 0; wrapped = 0; col = 0 }
+    BEGIN { fm = 0; fence = 0; n = 0; wrapped = 0; col = 0; lmark = 0; lind = 0 }
     NR == 1 && $0 == "---" { fm = 1; print; next }
     fm { if ($0 == "---") fm = 0; print; next }
     /^[ \t]*(```|~~~)/ { fence = !fence; flush(); print; next }
@@ -163,12 +171,23 @@ reflow() {
     # when whitespace follows it, so *emphasis* opening a line stays prose.
     /^[ \t]*#{1,6}([ \t]|$)/ { flush(); print; next }
     /^[ \t]*[|>]/ { flush(); print; next }
-    /^[ \t]*[-*+][ \t]/ { flush(); print; next }
-    /^[ \t]*[0-9]+[.)][ \t]/ { flush(); print; next }
+    # Thematic break and setext underline, before the list rule can claim them.
     /^[ \t]*(=+|-+|([-*_][ \t]*){3,})[ \t]*$/ { flush(); print; next }
+    # A list marker opens a block rather than ending one: the item text wraps
+    # onto its continuations, so the marker line is line 1 of the paragraph.
+    /^[ \t]*([-*+]|[0-9]+[.)])[ \t]/ {
+      flush()
+      n = 1; P[1] = $0; BRK[1] = ($0 ~ /(  +|\\)$/)
+      lmark = 1; lind = indlen($0)
+      next
+    }
     /^[ \t]*</ { flush(); print; next }
-    /^([ ]{4,}|\t)/ { flush(); print; next }
     {
+      # Inside a list item, a line that dedents to the marker or indents a
+      # further four leaves the item: the first is the next block, the second
+      # is a code block nested under it.
+      if (lmark && (indlen($0) <= lind || indlen($0) >= lind + 4)) flush()
+      if (!lmark && $0 ~ /^([ ]{4,}|\t)/) { flush(); print; next }
       n++
       P[n] = $0
       # Explicit markdown line break: two trailing spaces, or a trailing backslash.
