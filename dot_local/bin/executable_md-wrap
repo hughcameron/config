@@ -124,7 +124,14 @@ show_diff() {  # $1 file on disk, $2 reflowed copy
 # One classifier, shared by every mode. Buffers the file, reflows the paragraphs
 # it judges hard-wrapped, and reports the count on stderr as "<n> <maxcol>".
 reflow() {
-  awk -v MIN="$MIN" -v MAX="$MAX" '
+  # LC_ALL=C pins awk to bytes so the character count below is deterministic:
+  # BSD awk's length() counts bytes whatever the locale says, and every line
+  # holding an em dash or a curly quote would otherwise measure over the limit
+  # and be passed over. Every pattern here is ASCII, and awk stays byte
+  # transparent, so nothing else changes.
+  LC_ALL=C awk -v MIN="$MIN" -v MAX="$MAX" '
+    # Characters, not bytes: drop the UTF-8 continuation bytes from the count.
+    function ulen(s,   t, c) { t = s; c = gsub(/[\200-\277]/, "", t); return length(s) - c }
     # Leading whitespace of a line, "" when it starts in column 1.
     function indent(s,   t) { t = s; sub(/[^ \t].*$/, "", t); return t }
     function indlen(s) { return length(indent(s)) }
@@ -141,8 +148,8 @@ reflow() {
         for (i = first; ok && i <= n; i++) if (indent(P[i]) != ind) ok = 0
       }
       for (i = 1; ok && i < n; i++) {
-        if (length(P[i]) < MIN || length(P[i]) > MAX || BRK[i]) ok = 0
-        else if (length(P[i]) > m) m = length(P[i])
+        if (ulen(P[i]) < MIN || ulen(P[i]) > MAX || BRK[i]) ok = 0
+        else if (ulen(P[i]) > m) m = ulen(P[i])
       }
       if (ok) {
         # Keep the block indent once, on the joined line; every continuation
