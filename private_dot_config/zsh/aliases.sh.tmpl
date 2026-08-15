@@ -56,6 +56,17 @@ alias ccusage='bunx ccusage@latest'
 alias dx='navi --query "duckdb -f <file>" --best-match'
 alias dv='navi --query "duckdb -json -f <file> | vd -f json" --best-match'
 alias dj='navi --query "duckdb -json -f <file> | jless" --best-match'
+
+# Hybrid retrieval over an Obsidian vault (obsidian-hybrid-search, installed via
+# `bun install -g`, so it is version-pinned and on PATH rather than a git checkout).
+#   ohs    the raw engine. UNSCOPED — it will return session transcripts.
+#          Needs OBSIDIAN_VAULT_PATH, or run it from inside a vault.
+#   brain  the same engine scoped to the governing layer of the planning vault,
+#          with its index kept outside the vault so it never reaches Obsidian Sync.
+#          Resolves its own vault and index, so it works from any directory.
+# MERIDIAN_VAULT is set in secrets.sh, not here — this repo is public.
+alias ohs='obsidian-hybrid-search'
+alias brain='python3 "$MERIDIAN_VAULT/tools/brain-query.py"'
 {{ end -}}
 
 {{ if eq .chezmoi.os "linux" -}}
