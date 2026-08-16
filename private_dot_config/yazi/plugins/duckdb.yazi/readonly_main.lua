@@ -69,6 +69,11 @@ local extension_map = {
 	tsv = "csv",
 	txt = "text",
 	json = "json",
+	-- LOCAL PATCH: newline-delimited JSON. duckdb reads it through the same
+	-- bare `FROM 'file'` path as .json, and unlike a single-document .json it
+	-- is genuinely many rows, so cache_size actually bounds the work.
+	jsonl = "json",
+	ndjson = "json",
 	parquet = "parquet",
 	xlsx = "excel",
 	duckdb = "duckdb",

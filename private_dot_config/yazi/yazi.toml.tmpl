@@ -31,6 +31,8 @@ prepend_previewers = [
   { url = "*.csv",     run = "duckdb" },
   { url = "*.tsv",     run = "duckdb" },
   { url = "*.json",    run = "duckdb" },
+  { url = "*.jsonl",   run = "duckdb" },
+  { url = "*.ndjson",  run = "duckdb" },
   { url = "*.parquet", run = "duckdb" },
   { url = "*.xlsx",    run = "duckdb" },
   { url = "*.db",      run = "duckdb" },
@@ -41,6 +43,8 @@ prepend_preloaders = [
   { url = "*.csv",     run = "duckdb", multi = false },
   { url = "*.tsv",     run = "duckdb", multi = false },
   { url = "*.json",    run = "duckdb", multi = false },
+  { url = "*.jsonl",   run = "duckdb", multi = false },
+  { url = "*.ndjson",  run = "duckdb", multi = false },
   { url = "*.parquet", run = "duckdb", multi = false },
   { url = "*.xlsx",    run = "duckdb", multi = false },
 ]
