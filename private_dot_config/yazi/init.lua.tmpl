@@ -2,7 +2,12 @@
 -- cache_size caps how many rows a preview reads. It reaches the summarize pass
 -- only because of a local patch in plugins/duckdb.yazi/main.lua -- upstream
 -- summarizes the whole file regardless, so every preload paid a full scan.
-require("duckdb"):setup { cache_size = 1000 }
+-- mode: open on the data. The plugin defaults to "summarized" (one row per
+-- column: type, min, max, avg, null%). `g t` flips between the two.
+require("duckdb"):setup {
+	mode = "standard",
+	cache_size = 1000,
+}
 
 require("full-border"):setup()
 

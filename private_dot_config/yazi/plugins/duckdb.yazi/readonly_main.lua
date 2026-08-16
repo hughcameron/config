@@ -282,12 +282,36 @@ local function get_cache_path(job, mode, extension)
 	return path_str, path_url
 end
 
+-- LOCAL PATCH: highlight colours live at ~/.config/duckdb/colors.sql rather
+-- than ~/.duckdbrc, so duckdb does not load them on its own. Pass the file
+-- explicitly to get the palette back in previews. duckdb announces every init
+-- file on stderr; strip_init_notice below is what keeps that from reading as a
+-- query failure.
+local COLORS_INIT = (os.getenv("HOME") or "") .. "/.config/duckdb/colors.sql"
+
+-- Remove duckdb's "-- Loading resources from <file>" notice, with its colour
+-- codes, so only genuine diagnostics remain. Anything else on stderr is still
+-- treated as an error.
+local function strip_init_notice(stderr)
+	if not stderr or stderr == "" then
+		return stderr
+	end
+	local cleaned = stderr:gsub("\27%[[0-9;]*m", "")
+	cleaned = cleaned:gsub("%-%- Loading resources from [^\n]*\n?", "")
+	return (cleaned:gsub("^%s+", ""):gsub("%s+$", ""))
+end
+
 -- Run queries.
 local function run_query(job, query, target, file_type)
 	local width = math.max((job.area and job.area.w * 3 or 80), 80)
 	local height = math.max((job.area and job.area.h or 25), 25)
 
 	local args = {}
+
+	if fs.cha(Url(COLORS_INIT)) then
+		table.insert(args, "-init")
+		table.insert(args, COLORS_INIT)
+	end
 
 	if file_type == "duckdb" then
 		table.insert(args, "-readonly")
@@ -317,7 +341,7 @@ local function run_query(job, query, target, file_type)
 
 	local output, err = child:wait_with_output()
 	if err or not output.status.success then
-		ya.err("DuckDB error: " .. (err or output.stderr or "[unknown error]"))
+		ya.err("DuckDB error: " .. (err or strip_init_notice(output.stderr) or "[unknown error]"))
 		return nil
 	end
 
@@ -433,8 +457,11 @@ set variable included_columns = (
 		fetched_columns
 	)
 
+	-- LOCAL PATCH: `c -> ...` is the deprecated lambda arrow. duckdb 1.5.4 warns
+	-- on stderr about it, which the plugin then surfaces instead of the table.
+	-- `lambda c: ...` is the supported form and emits nothing.
 	local filtered_select = string.format(
-		"select %scolumns(c -> list_contains(getvariable('included_columns'), c)) from %s limit %d offset %d;",
+		"select %scolumns(lambda c: list_contains(getvariable('included_columns'), c)) from %s limit %d offset %d;",
 		row_id_prefix,
 		target,
 		limit,
@@ -586,8 +613,9 @@ end
 
 local function output_is_valid(output, mode, job)
 	if output then
-		if output.stderr and output.stderr ~= "" then
-			ya.err("DuckDB returned an error or:\n" .. output.stderr)
+		local stderr = strip_init_notice(output.stderr)
+		if stderr and stderr ~= "" then
+			ya.err("DuckDB returned an error or:\n" .. stderr)
 			return false
 		elseif not output.stdout or output.stdout == "" then
 			ya.err(string.format("Peek - No stdout/stderr from %s cache for %s", mode, job.file.url))
@@ -690,14 +718,15 @@ local function create_cache(job, mode, file_type, limit)
 		ya.dbg("stderr: " .. tostring(output.stderr))
 	end
 
-	if not output or (output.stderr and output.stderr ~= "") then
+	local cache_stderr = output and strip_init_notice(output.stderr)
+	if not output or (cache_stderr and cache_stderr ~= "") then
 		ya.err(
 			output
 					and string.format(
 						"[duckdb] error creating %s cache for %s: %s",
 						mode,
 						tostring(job.file.url),
-						output.stderr
+						cache_stderr
 					)
 				or string.format(
 					"[duckdb] no output returned while creating %s cache for %s",

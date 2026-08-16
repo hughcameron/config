@@ -107,6 +107,14 @@ on = "L"
 run = "plugin duckdb +1"
 desc = "Scroll one column to the right"
 
+# The plugin toggles table/schema in its seek handler, when the resulting skip
+# goes negative — there is no dedicated action to call. A large negative seek
+# guarantees that regardless of how far down the preview is already scrolled.
+[[manager.prepend_keymap]]
+on = ["g", "t"]
+run = "seek -9999"
+desc = "Toggle duckdb table / schema view"
+
 [[manager.prepend_keymap]]
 on = ["g", "o"]
 run = "plugin duckdb -open"
