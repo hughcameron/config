@@ -1,5 +1,8 @@
--- DuckDB plugin configuration
-require("duckdb"):setup()
+-- DuckDB plugin configuration.
+-- cache_size caps how many rows a preview reads. It reaches the summarize pass
+-- only because of a local patch in plugins/duckdb.yazi/main.lua -- upstream
+-- summarizes the whole file regardless, so every preload paid a full scan.
+require("duckdb"):setup { cache_size = 1000 }
 
 require("full-border"):setup()
 
