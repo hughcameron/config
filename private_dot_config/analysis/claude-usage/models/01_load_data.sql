@@ -13,12 +13,18 @@
 SET preserve_insertion_order=false;
 
 CREATE OR REPLACE TABLE raw_usage AS
+-- `isSidechain` and `gitBranch` are scalars, so they add nothing measurable to
+-- the projection above while carrying the two axes `cwd` cannot: WHO spent the
+-- tokens (main loop vs subagent) and which lane they were spent in.
+-- `union_by_name` is required because older transcripts predate both fields.
 SELECT
     requestId,
     sessionId,
     cwd,
     type,
     timestamp,
+    COALESCE(isSidechain, FALSE) AS is_sidechain,
+    gitBranch AS git_branch,
     { model: message.model, usage: message.usage } AS message,
     filename AS source_file
-FROM read_ndjson($jsonl_glob, filename=TRUE, ignore_errors=TRUE);
+FROM read_ndjson($jsonl_glob, filename=TRUE, ignore_errors=TRUE, union_by_name=TRUE);

@@ -1,11 +1,12 @@
 # macOS taps
+tap "agavra/tap"
 tap "antoniorodr/memo"
 tap "hashicorp/tap"
 tap "hudochenkov/sshpass"
 tap "meridian-online/tap"
 tap "oven-sh/bun"
+tap "quarkdown-labs/quarkdown"
 tap "steipete/tap"
-tap "yakitrak/yakitrak"
 
 # macOS CLI tools
 brew "age"
@@ -14,7 +15,6 @@ brew "awscli"
 brew "bash-language-server"
 brew "bat"
 brew "beads"
-brew "bun"
 brew "carapace"
 brew "cargo-deny"
 brew "chafa"
@@ -43,6 +43,7 @@ brew "gonzo"
 brew "googleworkspace-cli"
 brew "goreleaser"
 brew "grip"
+brew "herdr"
 brew "hf"
 brew "htop"
 brew "imagemagick"
@@ -104,13 +105,15 @@ brew "yq"
 brew "yt-dlp"
 brew "zoxide"
 brew "zsh-autocomplete"
-brew "antoniorodr/memo/memo"
-brew "hashicorp/tap/terraform"
-brew "hudochenkov/sshpass/sshpass"
-brew "meridian-online/tap/finetype"
-brew "oven-sh/bun/bun"
-brew "steipete/tap/remindctl"
-brew "yakitrak/yakitrak/obsidian-cli"
+brew "agavra/tap/tuicr", trusted: true
+brew "antoniorodr/memo/memo", trusted: true
+brew "hashicorp/tap/terraform", trusted: true
+brew "hudochenkov/sshpass/sshpass", trusted: true
+brew "meridian-online/tap/brightfield", trusted: true
+brew "meridian-online/tap/finetype", trusted: true
+brew "oven-sh/bun/bun", trusted: true
+brew "quarkdown-labs/quarkdown/quarkdown", trusted: true
+brew "steipete/tap/remindctl", trusted: true
 
 # macOS casks
 cask "1password"
@@ -155,9 +158,9 @@ cask "meetily"
 cask "microsoft-teams"
 cask "monitorcontrol"
 cask "motrix"
-cask "numi"
 cask "obsidian"
 cask "ogdesign-eagle"
+cask "parsify"
 cask "pearcleaner"
 cask "rectangle"
 cask "sf-symbols"
@@ -177,7 +180,10 @@ mas "Color Picker", id: 1545870783
 mas "Developer", id: 640199958
 mas "Eagle for Safari", id: 1526651672
 mas "iA Writer", id: 775737590
-mas "iMovie", id: 408981434
+mas "Keynote", id: 361285480
+mas "LottieFilesApp", id: 1531085233
+mas "Microsoft PowerPoint", id: 462062816
+mas "Numbers", id: 361304891
 mas "Pixelmator Pro", id: 1289583905
 mas "Play", id: 1596506190
 mas "Reeder", id: 6475002485
@@ -188,15 +194,22 @@ mas "Xcode", id: 497799835
 
 # VSCode extensions
 vscode "darkriszty.markdown-table-prettify"
-vscode "github.copilot-chat"
 vscode "mermaidchart.vscode-mermaid-chart"
 vscode "pomdtr.excalidraw-editor"
 
 # Cargo
+cargo "arc"
 cargo "cargo-cache"
-cargo "finetype-cli"
+cargo "cargo-license"
+cargo "cargo-machete"
 cargo "model2vec-rs"
 cargo "sitemapper"
 
+# uv tools
+uv "rendercv[full]"
+
 # Manual installs (no Homebrew formula)
 # bcli (Bear CLI via CloudKit): curl -L https://github.com/mreider/better-bear-cli/releases/latest/download/bcli-macos-universal.tar.gz | tar xz -C ~/.local/bin
+# obsidian: the Obsidian desktop app ships its own CLI but puts nothing on PATH.
+# The obsidian-cli skill calls it as `obsidian`, so link it after installing the cask:
+#   ln -s /Applications/Obsidian.app/Contents/MacOS/obsidian-cli /opt/homebrew/bin/obsidian

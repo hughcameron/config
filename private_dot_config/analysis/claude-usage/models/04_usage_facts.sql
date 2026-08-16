@@ -13,6 +13,8 @@ SELECT
     u.output_tokens,
     u.cache_creation_tokens,
     u.cache_read_tokens,
+    u.is_sidechain,
+    u.git_branch,
     u.source_file,
 
     -- Date dimensions

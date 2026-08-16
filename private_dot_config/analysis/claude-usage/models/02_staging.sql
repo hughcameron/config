@@ -14,6 +14,11 @@ WITH aggregated AS (
         MAX(message.usage.output_tokens) AS output_tokens,
         MAX(COALESCE(message.usage.cache_creation_input_tokens, 0)) AS cache_creation_tokens,
         MAX(COALESCE(message.usage.cache_read_input_tokens, 0)) AS cache_read_tokens,
+        -- Constant within a request, but AGGREGATED rather than grouped: a NULL
+        -- on one streaming record would otherwise split the request into two rows
+        -- and double-count its tokens.
+        BOOL_OR(is_sidechain) AS is_sidechain,
+        MAX(git_branch) AS git_branch,
         -- Take the latest timestamp and source file
         MAX(timestamp) AS event_timestamp,
         MAX(source_file) AS source_file
@@ -34,6 +39,8 @@ SELECT
     output_tokens,
     cache_creation_tokens,
     cache_read_tokens,
+    is_sidechain,
+    git_branch,
     source_file
 FROM aggregated
 WHERE request_id IS NOT NULL;

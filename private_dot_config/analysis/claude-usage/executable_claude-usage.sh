@@ -251,6 +251,58 @@ cmd_blocks() {
     | tail -n +2 | reverse_lines \
     | uplot bar -d ',' -t "Recent 5-Hour Billing Blocks" --ylabel "USD"
 }
+# Boxed output for multi-column tables — the chart commands use CSV + uplot,
+# but these are small tables meant to be read rather than plotted.
+table_db() { printf '%s' "$1" | duckdb -init /dev/null -box "$DB_PATH"; }
+
+# `mix` — where the output tokens went, on the two axes `cwd` cannot answer.
+# It REPORTS; it sets no target. A spend ratio is an INPUT measure and the most
+# gameable class there is: verbose code and terse notes would "improve" every
+# number here while making the work worse. Read it as a diagnostic.
+cmd_mix() {
+  local weeks; weeks="$(get_flag_val --weeks "$@")"; weeks="${weeks:-6}"
+  build_db
+
+  echo
+  echo "  WHO SPENT IT — main loop vs subagents"
+  echo "  conductor% is the share of output tokens spent in the main loop rather than"
+  echo "  in a builder, verifier or triage agent — the closest available proxy for"
+  echo "  orchestration overhead measured against work delivered."
+  table_db "
+    SELECT strftime('%Y-%m-%d', event_week) AS week,
+           SUM(CASE WHEN NOT is_sidechain THEN output_tokens ELSE 0 END) AS conductor,
+           SUM(CASE WHEN is_sidechain THEN output_tokens ELSE 0 END)     AS subagent,
+           ROUND(100.0 * SUM(CASE WHEN NOT is_sidechain THEN output_tokens ELSE 0 END)
+                 / NULLIF(SUM(output_tokens), 0), 1) AS \"conductor%\"
+    FROM fact_usage GROUP BY 1 ORDER BY 1 DESC LIMIT ${weeks};"
+
+  echo
+  echo "  CONTEXT AMPLIFICATION — context re-read per token written"
+  echo "  read/out rising against flat output means the same context is being re-read"
+  echo "  to produce the same work. reuse% is cache reads as a share of all cached"
+  echo "  input; a low reuse% means paying to rebuild cache that was just discarded."
+  table_db "
+    SELECT strftime('%Y-%m-%d', event_week) AS week,
+           SUM(output_tokens)         AS output,
+           SUM(cache_read_tokens)     AS cache_read,
+           SUM(cache_creation_tokens) AS cache_created,
+           ROUND(SUM(cache_read_tokens) * 1.0 / NULLIF(SUM(output_tokens), 0), 1) AS \"read/out\",
+           ROUND(100.0 * SUM(cache_read_tokens)
+                 / NULLIF(SUM(cache_read_tokens) + SUM(cache_creation_tokens), 0), 1) AS \"reuse%\"
+    FROM fact_usage GROUP BY 1 ORDER BY 1 DESC LIMIT ${weeks};"
+
+  echo
+  echo "  WHERE — output tokens by working directory"
+  table_db "
+    SELECT regexp_extract(working_directory, '([^/]+)/?\$', 1) AS dir,
+           SUM(output_tokens) AS output,
+           COUNT(*) AS requests
+    FROM fact_usage
+    WHERE event_week >= (SELECT MAX(event_week) FROM fact_usage) - INTERVAL '${weeks} weeks'
+    GROUP BY 1 HAVING SUM(output_tokens) > 0 ORDER BY 2 DESC LIMIT 12;"
+  echo
+}
+
 cmd_status() {
   build_db
   local row
@@ -578,6 +630,7 @@ cmd_help() {
   echo "  claude-usage monthly - Monthly cost chart"
   echo "  claude-usage sessions - Top sessions by cost"
   echo "  claude-usage blocks  - 5-hour billing blocks"
+  echo "  claude-usage mix     - Conductor vs subagent spend, and context re-read per token"
   echo "  claude-usage usage   - Current plan-usage meters (like the desktop /usage panel)"
   echo "  claude-usage pace week  - Burndown vs. the weekly usage limit"
   echo "  claude-usage pace month - Cumulative cost this month vs. pace"
@@ -600,6 +653,7 @@ main() {
     monthly)         cmd_monthly "$@";;
     sessions)        cmd_sessions "$@";;
     blocks)          cmd_blocks "$@";;
+    mix)             cmd_mix "$@";;
     status)          cmd_status "$@";;
     usage)           cmd_usage "$@";;
     refresh-pricing) cmd_refresh_pricing "$@";;
