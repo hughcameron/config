@@ -52,6 +52,14 @@ alias ccu='bash ~/.config/analysis/claude-usage/claude-usage.sh'
 # ccusage npm CLI, run on demand (no global install; same as ccu uses internally)
 alias ccusage='bunx ccusage@latest'
 
+# DuckDB — load highlight colours explicitly rather than from ~/.duckdbrc.
+# duckdb prints "-- Loading resources from <file>" on stderr whenever it loads
+# an init file, and yazi's duckdb preloader treats any stderr as a failed
+# preview: it deletes the parquet cache it just wrote and re-runs forever.
+# Keeping the colours off the default path means yazi's duckdb (spawned
+# directly, so no alias applies) sees empty stderr, while shells get colour.
+alias duckdb='duckdb -init ~/.config/duckdb/colors.sql'
+
 # DuckDB via navi
 alias dx='navi --query "duckdb -f <file>" --best-match'
 alias dv='navi --query "duckdb -json -f <file> | vd -f json" --best-match'
