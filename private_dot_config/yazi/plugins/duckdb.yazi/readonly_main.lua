@@ -678,8 +678,12 @@ local function create_cache(job, mode, file_type, limit)
 	local base_query = generate_preload_query(job, mode, file_type, limit)
 	local query = string.format("COPY (%s) TO '%s' (FORMAT 'parquet');", base_query, target)
 	local output = run_query(job, query, nil, file_type)
-	ya.dbg("stdout: " .. tostring(output.stdout))
-	ya.dbg("stderr: " .. tostring(output.stderr))
+	-- LOCAL PATCH: same nil dereference as in peek -- the guard below already
+	-- handles a nil output, but these two lines ran before it.
+	if output then
+		ya.dbg("stdout: " .. tostring(output.stdout))
+		ya.dbg("stderr: " .. tostring(output.stderr))
+	end
 
 	if not output or (output.stderr and output.stderr ~= "") then
 		ya.err(
@@ -764,6 +768,16 @@ function M:peek(job)
 	local query = generate_peek_query(args.target, job, args.limit, args.offset, args.file_type, args.cache_str)
 	ya.dbg("query: " .. tostring(query))
 	local output = run_query(job, query, args.target, args.file_type)
+	-- LOCAL PATCH: run_query returns nil when duckdb exits non-zero, and these
+	-- debug lines indexed it unguarded -- "attempt to index a nil value" during
+	-- peek. Any file duckdb genuinely cannot read reaches here: a JSON document
+	-- above maximum_object_size, for instance. output_is_valid handles nil, but
+	-- render_output at the end of peek does not, so bail out to the text
+	-- previewer rather than limping on with no output.
+	if not output then
+		ya.err("DuckDB could not read " .. tostring(job.file.url) .. "; falling back to the text preview")
+		return require("code"):peek(job)
+	end
 	ya.dbg("stdout: " .. tostring(output.stdout))
 	ya.dbg("stderr: " .. tostring(output.stderr))
 	if not output_is_valid(output, args.mode, job) then
