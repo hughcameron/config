@@ -76,7 +76,7 @@ title = {}
 value = {}
 selected = { reversed = true }
 
-[completion]
+[cmp]
 border = { fg = "#1f6f88" }
 active = { reversed = true }
 inactive = {}
@@ -96,11 +96,9 @@ cand = { fg = "#c2a05c" }
 desc = { fg = "#2d3640" }
 
 [help]
-on = { fg = "#1f6f88" }
-run = { fg = "#9464b6" }
-desc = {}
+chord = { fg = "#1f6f88" }
+action = { fg = "#9464b6" }
 hovered = { reversed = true, bold = true }
-footer = { fg = "#0a0e14", bg = "#5c6773" }
 
 [notify]
 title_info = { fg = "#7e9350" }
