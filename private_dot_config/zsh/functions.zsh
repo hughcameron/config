@@ -53,11 +53,14 @@ gs() {
 }
 
 # fzf picker for tmux sessions: switch (inside tmux) or attach (outside).
+# Pass a session name to skip the picker.
 ta() {
-    local session
-    session=$(tmux list-sessions -F '#{session_name}' 2>/dev/null \
-        | fzf --prompt='tmux > ' --height=40% --reverse --no-multi) || return
-    [[ -z "$session" ]] && return
+    local session="$1"
+    if [[ -z "$session" ]]; then
+        session=$(tmux list-sessions -F '#{session_name}' 2>/dev/null \
+            | fzf --prompt='tmux > ' --height=40% --reverse --no-multi) || return
+        [[ -z "$session" ]] && return
+    fi
     if [[ -n "$TMUX" ]]; then
         tmux switch-client -t "$session"
     else
