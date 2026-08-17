@@ -9,7 +9,10 @@ Host beelink
 {{ end -}}
 {{ if eq .chezmoi.os "linux" -}}
 # GitHub SSH authentication (for clone/push)
+# Route over ssh.github.com:443 — some networks block outbound port 22.
 Host github.com
+    HostName ssh.github.com
+    Port 443
     IdentityFile ~/.ssh/github_vm_access
     IdentitiesOnly yes
     StrictHostKeyChecking accept-new
