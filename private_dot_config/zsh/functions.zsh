@@ -386,6 +386,118 @@ duckle-update() {
     echo "duckle-update: installed $latest -> $target_dir/duckle"
 }
 
+# Rill Developer (local BI, DuckDB engine): install/update from latest GitHub
+# release. Layout mirrors duckle-update: ~/.local/share/rill/<version>/rill with
+# a 'current' symlink and a 'rill' shim in ~/.local/bin. Verifies checksums.txt.
+# Installs on first run. Release zips are ~130-165 MB, so all but the newest two
+# versions are pruned after a successful install.
+rill-update() {
+    local repo="rilldata/rill"
+    local share_dir="$HOME/.local/share/rill"
+    local bin_dir="$HOME/.local/bin"
+
+    # Map uname -> release asset (rill_<os>_<arch>.zip).
+    local os arch
+    case "$(uname -s)" in
+        Darwin) os="darwin" ;;
+        Linux)  os="linux" ;;
+        *) echo "rill-update: unsupported OS $(uname -s)."; return 1 ;;
+    esac
+    case "$(uname -m)" in
+        arm64|aarch64) arch="arm64" ;;
+        x86_64|amd64)  arch="amd64" ;;
+        *) echo "rill-update: unsupported arch $(uname -m)."; return 1 ;;
+    esac
+    local asset="rill_${os}_${arch}.zip"
+
+    local latest
+    latest="$(gh release list --repo "$repo" --limit 30 \
+        --json tagName --jq '[.[] | select(.tagName | test("^v[0-9]"))][0].tagName')"
+    if [[ -z "$latest" ]]; then
+        echo "rill-update: no v* release found."
+        return 1
+    fi
+
+    local installed=""
+    [[ -L "$share_dir/current" ]] && installed="$(basename "$(readlink "$share_dir/current")")"
+    if [[ "$installed" == "$latest" && "$1" != "--force" ]]; then
+        echo "rill-update: already on $latest (--force to reinstall)."
+        return 0
+    fi
+
+    local target_dir="$share_dir/$latest"
+    local tmp_dir; tmp_dir="$(mktemp -d -t rill-XXXXXX)"
+
+    echo "rill-update: downloading $latest ($asset, ~150MB)..."
+    if ! gh release download "$latest" --repo "$repo" \
+            --pattern "$asset" --pattern 'checksums.txt' \
+            --dir "$tmp_dir" --clobber; then
+        rm -rf "$tmp_dir"
+        echo "rill-update: download failed."
+        return 1
+    fi
+
+    echo "rill-update: verifying checksum..."
+    local sha_cmd
+    if (( $+commands[sha256sum] )); then
+        sha_cmd="sha256sum"
+    elif (( $+commands[shasum] )); then
+        sha_cmd="shasum -a 256"
+    fi
+    if [[ -n "$sha_cmd" ]]; then
+        local want got
+        want="$(grep " $asset\$" "$tmp_dir/checksums.txt" | awk '{print $1}')"
+        got="$(cd "$tmp_dir" && eval "$sha_cmd $asset" | awk '{print $1}')"
+        if [[ -z "$want" || "$want" != "$got" ]]; then
+            rm -rf "$tmp_dir"
+            echo "rill-update: checksum mismatch (want ${want:-none}, got $got)."
+            return 1
+        fi
+    else
+        echo "rill-update: no sha256 tool found, skipping verification."
+    fi
+
+    rm -rf "$target_dir"
+    mkdir -p "$target_dir"
+    if ! unzip -q -o "$tmp_dir/$asset" -d "$target_dir"; then
+        rm -rf "$tmp_dir" "$target_dir"
+        echo "rill-update: unzip failed."
+        return 1
+    fi
+    rm -rf "$tmp_dir"
+
+    # Binary has shipped at the top level; locate it either way rather than assume.
+    if [[ ! -f "$target_dir/rill" ]]; then
+        local found; found="$(find "$target_dir" -type f -name rill | head -1)"
+        if [[ -z "$found" ]]; then
+            rm -rf "$target_dir"
+            echo "rill-update: no 'rill' binary inside $asset."
+            return 1
+        fi
+        mv "$found" "$target_dir/rill"
+    fi
+    chmod +x "$target_dir/rill"
+
+    ln -sfn "$target_dir" "$share_dir/current"
+
+    mkdir -p "$bin_dir"
+    ln -sfn "$share_dir/current/rill" "$bin_dir/rill"
+
+    # Unpacked versions are a few hundred MB each. Keep the newest two, by mtime
+    # rather than name so v0.88.10 doesn't sort below v0.88.6. Real directories
+    # only, so the 'current' symlink is never a candidate.
+    local -a versions
+    versions=("$share_dir"/*(/^@OmN))
+    local v
+    for v in "${versions[@]:2}"; do
+        [[ "$v" == "$target_dir" ]] && continue
+        rm -rf "$v"
+        echo "rill-update: pruned ${v:t}"
+    done
+
+    echo "rill-update: installed $latest -> $target_dir/rill"
+}
+
 # List every callable name in the current shell: external commands,
 # aliases, functions, and builtins (sorted, deduped across categories).
 lscmd() {
