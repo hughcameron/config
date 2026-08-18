@@ -30,12 +30,28 @@ unset CF_API_TOKEN
 : "${PACE_READ_TOKEN:?not set in $ENV_FILE}"
 : "${PACE_WRITE_TOKEN:?not set in $ENV_FILE}"
 
+# Look the namespace up rather than parsing `create` output: wrangler's success
+# message format is not a contract, and looking it up makes a re-run after a
+# failed deploy idempotent instead of creating a second namespace.
+kv_id() {
+  wrangler kv namespace list 2>/dev/null \
+    | sed -n '/^[[:space:]]*\[/,$p' \
+    | jq -r '.[]? | select(.title | test("METRICS$")) | .id' 2>/dev/null \
+    | grep -E '^[0-9a-f]{32}$' | head -1
+}
+
 if grep -q REPLACE_WITH_KV_NAMESPACE_ID wrangler.toml; then
-  log "creating KV namespace METRICS"
-  id="$(wrangler kv namespace create METRICS 2>&1 | sed -n 's/.*"id"[: ]*"\([0-9a-f]\{32\}\)".*/\1/p' | head -1)"
-  [ -n "$id" ] || { echo "could not parse the new namespace id — create it by hand and edit wrangler.toml" >&2; exit 1; }
+  id="$(kv_id)"
+  if [ -n "$id" ]; then
+    log "reusing existing KV namespace $id"
+  else
+    log "creating KV namespace METRICS"
+    wrangler kv namespace create METRICS || true
+    id="$(kv_id)"
+  fi
+  [ -n "$id" ] || { echo "no KV namespace ending in METRICS found — check 'wrangler kv namespace list'" >&2; exit 1; }
   sed -i '' "s/REPLACE_WITH_KV_NAMESPACE_ID/$id/" wrangler.toml
-  log "KV namespace $id written into wrangler.toml — chezmoi add this file afterwards"
+  log "KV namespace $id written into wrangler.toml"
 fi
 
 log "pushing Worker secrets"

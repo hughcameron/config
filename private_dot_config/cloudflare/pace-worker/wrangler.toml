@@ -11,10 +11,13 @@ name = "pace-metrics"
 main = "src/worker.js"
 compatibility_date = "2026-08-18"
 workers_dev = true
+# Every deployed version otherwise gets its own public preview URL. They are behind the
+# same bearer tokens, but there is no reason for this to have more than one front door.
+preview_urls = false
 
 [observability]
 enabled = true
 
 [[kv_namespaces]]
 binding = "METRICS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "f1f5b303bac44db5990f4e62f3d53ed9"
