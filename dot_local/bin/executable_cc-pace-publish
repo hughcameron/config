@@ -80,7 +80,7 @@ age_min=$(( ( now - ${snap_ep:-now} ) / 60 ))
 # Colour is a function of |delta| only: green at on-pace, warming in both
 # directions, because pinning at either bound means the ring has stopped
 # telling you anything useful.
-IFS=$'\t' read -r gauge delta delta_true text label color pace_pct projected < <(
+IFS=$'\t' read -r gauge delta delta_true text label color pace_pct projected gauge_pct < <(
   awk -v c="$util" -v n="$now" -v ws="$window_start" -v lo="$GAUGE_MIN" -v hi="$GAUGE_MAX" '
     function lerp(a, b, t) { return a + (b - a) * t }
     # HSL rather than RGB: a straight RGB blend from green to amber travels
@@ -123,7 +123,11 @@ IFS=$'\t' read -r gauge delta delta_true text label color pace_pct projected < <
       else               { t = (ad - 10) / 20
                            col = hsl(lerp(36.49, 3.35, t), 1.0, lerp(0.5196, 0.6137, t)) }
 
-      printf "%.2f\t%d\t%.2f\t%s\t%s\t%s\t%.1f\t%.1f\n", g, di, d, text, label, col, pace, proj
+      # Same clamped value rescaled to 0..100, for a progress control that
+      # insists on that range instead of honouring an explicit min/max.
+      gp = (g - lo) / (hi - lo) * 100
+
+      printf "%.2f\t%d\t%.2f\t%s\t%s\t%s\t%.1f\t%.1f\t%.1f\n", g, di, d, text, label, col, pace, proj, gp
     }')
 [ -n "${color:-}" ] || die "pace computation produced nothing"
 
@@ -133,9 +137,11 @@ body="$(jq -nc \
   --argjson weekly_pct "$util" --argjson session_pct "${session:-0}" \
   --argjson projected_pct "$projected" --argjson pace_pct "$pace_pct" \
   --arg resets_at "$resets" --argjson age_minutes "$age_min" \
+  --argjson gauge_pct "$gauge_pct" --argjson min "$GAUGE_MIN" --argjson max "$GAUGE_MAX" \
   --arg updated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
   { $gauge, $delta, $delta_true, $text, $label, $color,
     $weekly_pct, $session_pct, $projected_pct, $pace_pct,
+    $gauge_pct, $min, $max,
     $resets_at, $age_minutes, $updated_at }')"
 
 code="$(curl -sS -m 20 -o /dev/null -w '%{http_code}' \
