@@ -30,5 +30,8 @@ private_dot_claude/private_plugins/
 backlog/
 agents/
 
+# Wrangler local state (created wherever wrangler is run)
+.wrangler/
+
 # Backup files
 *.backup

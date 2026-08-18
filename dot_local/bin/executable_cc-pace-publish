@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+# cc-pace-publish — publish the weekly usage pace figure to the private
+# Cloudflare Worker that backs the Complica watch complication.
+#
+# ALL of the arithmetic happens here, on this machine. cc-usage-fetch reads the
+# OAuth token from the macOS Keychain (it never leaves) and pulls the
+# authoritative meters from /api/oauth/usage; this script derives the same
+# delta `ccu pace week` prints — weekly% minus the fraction of the week
+# elapsed, in limit-points, negative meaning behind pace — and POSTs a small
+# JSON blob. Cloudflare stores the result and hands it to the watch; it
+# computes nothing.
+#
+# Cadence: every 20 minutes, from com.hughcameron.pace-publish. That
+# deliberately matches ccu's USAGE_CACHE_TTL, so each run gets a genuine API
+# read without ever tripping the endpoint's rate limit.
+#
+# macOS only: cc-usage-fetch needs the Keychain, and the date parsing below is
+# BSD date. On a failed fetch we publish the last good snapshot with its true
+# age rather than going silent — age_minutes tells the consumer how stale it is.
+#
+# Usage: cc-pace-publish [metric-name]     (default: pace)
+set -uo pipefail
+
+# Overridable so a dry run can point at a stub endpoint, and so a second
+# metric can carry its own credentials later.
+ENV_FILE="${PACE_ENV_FILE:-${HOME}/.config/analysis/claude-usage/pace-publish.env}"
+DATA_DIR="${HOME}/.config/analysis/claude-usage/data"
+CACHE="${DATA_DIR}/usage-api.json"
+FETCH="${HOME}/.local/bin/cc-usage-fetch"
+METRIC="${1:-pace}"
+
+# Complica's Circular gauge is configured -30..+30; the ring value is clamped to
+# that range so it pins instead of rendering out of bounds. delta_true keeps the
+# real number, which routinely reaches -70 by the end of a quiet week.
+GAUGE_MIN=-30
+GAUGE_MAX=30
+
+log() { printf '%s cc-pace-publish: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"; }
+die() { log "$*"; exit 1; }
+
+# UTC ISO-8601 -> epoch. Tolerates fractional seconds and a +00:00 offset, which
+# is what /api/oauth/usage emits; a non-UTC offset would be misread, and the API
+# has never sent one.
+iso_to_epoch() {
+  local s="${1%%.*}"; s="${s%%+*}"; s="${s%Z}"
+  date -j -u -f '%Y-%m-%dT%H:%M:%S' "$s" +%s 2>/dev/null
+}
+
+[ -r "$ENV_FILE" ] || die "missing $ENV_FILE — run chezmoi apply"
+# shellcheck source=/dev/null
+. "$ENV_FILE"
+: "${PACE_ENDPOINT:?not set in $ENV_FILE}"
+: "${PACE_WRITE_TOKEN:?not set in $ENV_FILE}"
+
+# Best effort: cc-usage-fetch keeps the last good cache on any failure and exits
+# non-zero, so a 429 or a closed lid degrades to a stale-but-honest publish.
+if [ -x "$FETCH" ]; then
+  "$FETCH" >/dev/null 2>&1 || log "fetch failed — falling back to the cached snapshot"
+else
+  log "no $FETCH — using whatever is cached"
+fi
+[ -s "$CACHE" ] || die "no usage snapshot at $CACHE — nothing to publish"
+
+IFS=$'\t' read -r util resets session snap_ts < <(
+  jq -r '[ (.weekly_all.util // empty),
+           (.weekly_all.resets_at // empty),
+           (.session.util // 0),
+           (.ts // empty) ] | @tsv' "$CACHE")
+[ -n "${util:-}" ] && [ -n "${resets:-}" ] || die "snapshot has no weekly_all reading"
+
+now="$(date -u +%s)"
+reset_ep="$(iso_to_epoch "$resets")" || true
+[ -n "${reset_ep:-}" ] || die "could not parse resets_at: $resets"
+window_start=$(( reset_ep - 7 * 86400 ))
+snap_ep="$(iso_to_epoch "${snap_ts:-}")" || true
+age_min=$(( ( now - ${snap_ep:-now} ) / 60 ))
+[ "$age_min" -lt 0 ] && age_min=0
+
+# Delta, clamp, projection and the symmetric colour ramp, in one pass.
+# Colour is a function of |delta| only: green at on-pace, warming in both
+# directions, because pinning at either bound means the ring has stopped
+# telling you anything useful.
+IFS=$'\t' read -r gauge delta delta_true text label color pace_pct projected < <(
+  awk -v c="$util" -v n="$now" -v ws="$window_start" -v lo="$GAUGE_MIN" -v hi="$GAUGE_MAX" '
+    function lerp(a, b, t) { return a + (b - a) * t }
+    # HSL rather than RGB: a straight RGB blend from green to amber travels
+    # through olive, which reads as sickly on a black watch face. Rotating hue
+    # keeps every intermediate vivid — green, chartreuse, yellow, orange, red.
+    function chan(p, q, t) {
+      if (t < 0) t += 1
+      if (t > 1) t -= 1
+      if (t < 1 / 6) return p + (q - p) * 6 * t
+      if (t < 1 / 2) return q
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6
+      return p
+    }
+    function hsl(h, s, l,   p, q, r, g, b) {
+      h = h / 360
+      q = (l < 0.5) ? l * (1 + s) : l + s - l * s
+      p = 2 * l - q
+      r = chan(p, q, h + 1 / 3); g = chan(p, q, h); b = chan(p, q, h - 1 / 3)
+      return sprintf("#%02X%02X%02X", int(r * 255 + 0.5), int(g * 255 + 0.5), int(b * 255 + 0.5))
+    }
+    BEGIN {
+      frac = (n - ws) / 604800
+      pace = frac * 100
+      d    = c - pace
+      ad   = (d < 0) ? -d : d
+      proj = (frac <= 0) ? c : c / frac
+
+      g = d; if (g > hi) g = hi; if (g < lo) g = lo
+      di = int(ad + 0.5); if (d < 0) di = -di
+
+      if      (ad < 0.5) { text = "on pace";                          label = "on pace" }
+      else if (d > 0)    { text = sprintf("%.0f pts ahead of pace", ad); label = "ahead" }
+      else               { text = sprintf("%.0f pts behind pace", ad);  label = "behind" }
+
+      # Symmetric in |delta|: system green #30D158 on pace, through system
+      # orange #FF9F0A at 10 points out, to system red #FF453A at the +-30 bound.
+      if      (ad >= 30) { col = "#FF453A" }
+      else if (ad <= 10) { t = ad / 10
+                           col = hsl(lerp(134.91, 36.49, t), lerp(0.6364, 1.0, t), lerp(0.5039, 0.5196, t)) }
+      else               { t = (ad - 10) / 20
+                           col = hsl(lerp(36.49, 3.35, t), 1.0, lerp(0.5196, 0.6137, t)) }
+
+      printf "%.2f\t%d\t%.2f\t%s\t%s\t%s\t%.1f\t%.1f\n", g, di, d, text, label, col, pace, proj
+    }')
+[ -n "${color:-}" ] || die "pace computation produced nothing"
+
+body="$(jq -nc \
+  --argjson gauge "$gauge" --argjson delta "$delta" --argjson delta_true "$delta_true" \
+  --arg text "$text" --arg label "$label" --arg color "$color" \
+  --argjson weekly_pct "$util" --argjson session_pct "${session:-0}" \
+  --argjson projected_pct "$projected" --argjson pace_pct "$pace_pct" \
+  --arg resets_at "$resets" --argjson age_minutes "$age_min" \
+  --arg updated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+  { $gauge, $delta, $delta_true, $text, $label, $color,
+    $weekly_pct, $session_pct, $projected_pct, $pace_pct,
+    $resets_at, $age_minutes, $updated_at }')"
+
+code="$(curl -sS -m 20 -o /dev/null -w '%{http_code}' \
+  -X POST "${PACE_ENDPOINT%/}/v1/${METRIC}" \
+  -H "Authorization: Bearer ${PACE_WRITE_TOKEN}" \
+  -H 'Content-Type: application/json' \
+  --data-binary "$body" 2>/dev/null)"
+
+if [ "$code" = "200" ]; then
+  log "published ${METRIC}: ${text} (gauge ${gauge}, ${color}, snapshot ${age_min}m old)"
+else
+  die "publish failed: HTTP ${code:-timeout} for ${PACE_ENDPOINT%/}/v1/${METRIC}"
+fi

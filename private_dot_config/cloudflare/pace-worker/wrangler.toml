@@ -1,0 +1,20 @@
+# pace-metrics — private metric mailbox behind two bearer tokens.
+# Deploy with ./deploy.sh, which needs a Cloudflare API token carrying exactly
+# Workers Scripts:Edit and Workers KV Storage:Edit (account-scoped, nothing else).
+#
+# The KV namespace id below is not a secret: it identifies a namespace but grants
+# nothing without account credentials, so it lives in the repo rather than in the
+# gitignored .chezmoidata/private.yaml. The endpoint URL and both bearer tokens do
+# NOT live here — they are in the age-encrypted pace-publish.env.
+
+name = "pace-metrics"
+main = "src/worker.js"
+compatibility_date = "2026-08-18"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[kv_namespaces]]
+binding = "METRICS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
