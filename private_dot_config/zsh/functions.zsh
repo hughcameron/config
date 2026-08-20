@@ -73,6 +73,9 @@ clone() {
     local url="$1"
     local owner repo url_to_clone target_dir
 
+    # Tolerate trailing slashes, e.g. https://github.com/owner/repo/
+    while [[ "$url" == */ ]]; do url="${url%/}"; done
+
     if [[ "$url" =~ '^([a-zA-Z0-9._-]+)/([a-zA-Z0-9._-]+)$' ]]; then
         owner="$match[1]"
         repo="$match[2]"
